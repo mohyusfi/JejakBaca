@@ -11,3 +11,7 @@ Menggunakan 5 label triage standar (`needs-triage`, `needs-info`, `ready-for-age
 ### Domain docs
 
 Multi-context (monorepo frontend & backend). Lihat `docs/agents/domain.md`.
+
+## Git & Commit
+
+- Seluruh commit message **wajib** ditulis dalam **Bahasa Indonesia** yang jelas dan ringkas.
