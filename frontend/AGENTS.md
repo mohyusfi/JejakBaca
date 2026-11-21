@@ -15,3 +15,15 @@ Multi-context (monorepo frontend & backend). Lihat `docs/agents/domain.md`.
 ## Git & Commit
 
 - Seluruh commit message **wajib** ditulis dalam **Bahasa Indonesia** yang jelas dan ringkas.
+
+## Arsitektur & Struktur Folder Frontend
+
+Gunakan pendekatan **Layer-based** di dalam `src/` dengan stack **TanStack Router**, **TanStack Query + `fetch`**, dan **Tailwind CSS**:
+
+- `src/routes/` — File-based routing menggunakan TanStack Router (`__root.tsx`, `index.tsx`, dll.).
+- `src/components/` — Komponen UI reusable; primitif UI diletakkan di `src/components/ui/`.
+- `src/services/` — Fungsi pemanggil API per resource menggunakan `fetch` wrapper dari `src/lib/api-client.ts`.
+- `src/hooks/` — Custom hooks dan TanStack Query hooks (`useQuery`, `useMutation`) yang membungkus `services/`.
+- `src/lib/` — Konfigurasi library & utilitas inti (`api-client.ts`, `query-client.ts`).
+- `src/types/` — TypeScript interfaces/types global dan DTO API.
+- `src/assets/` — Aset statis (gambar, ikon, font).
