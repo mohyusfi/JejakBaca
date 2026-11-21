@@ -1,0 +1,1205 @@
+openapi: 3.0.3
+info:
+  title: API Perpustakaan UNTAD
+  version: 1.0.0
+  description: |
+    Kontrak resmi REST API (`/api/v1/*`) dan 1 endpoint GraphQL (`POST /graphql`) untuk Sistem Peminjaman & Pengembalian Buku Perpustakaan UNTAD.
+
+    Aturan domain utama:
+    - **Buku Perpustakaan** (dikelola Admin) hanya untuk fitur **Pinjam & Kembalikan** secara *self-service* oleh User.
+    - **Buku Publik** (proxy ke Open Library API) tidak dapat dipinjam/dikembalikan, dan **hanya** untuk dilihat deskripsinya serta disimpan/dihapus pada **Readlist**.
+    - Seluruh endpoint REST menggunakan prefix versi `/api/v1`, sedangkan endpoint GraphQL tunggal berada di `POST /graphql`.
+
+servers:
+  - url: http://localhost:3000
+    description: Server pengembangan lokal
+
+tags:
+  - name: System
+    description: Kesehatan layanan dan status koneksi database
+  - name: Docs
+    description: Spesifikasi OpenAPI dan dokumentasi interaktif
+  - name: Auth
+    description: Registrasi User, login User/Admin, dan profil aktif
+  - name: Library Books
+    description: Katalog dan detail Buku Perpustakaan UNTAD (akses publik/tamu)
+  - name: Admin Books
+    description: Manajemen CRUD Buku Perpustakaan oleh Admin
+  - name: User Loans
+    description: Peminjaman dan pengembalian Buku Perpustakaan oleh User
+  - name: Admin Loans
+    description: Pemantauan seluruh peminjaman buku oleh Admin
+  - name: Public Books
+    description: Proxy pencarian dan detail Buku Publik dari Open Library API
+  - name: User Readlist
+    description: Pengelolaan daftar bacaan pribadi (khusus Buku Publik)
+  - name: GraphQL
+    description: Endpoint GraphQL tunggal (Read-Only Query Aggregator)
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT HS256 dengan masa berlaku 24 jam (`86400` detik)
+
+  schemas:
+    Role:
+      type: string
+      enum: [user, admin]
+
+    LoanStatus:
+      type: string
+      enum: [borrowed, returned]
+
+    ApiErrorCode:
+      type: string
+      enum:
+        - VALIDATION_ERROR
+        - UNAUTHORIZED
+        - FORBIDDEN
+        - NOT_FOUND
+        - CONFLICT
+        - LOAN_LIMIT_EXCEEDED
+        - DUPLICATE_ACTIVE_LOAN
+        - OUT_OF_STOCK
+        - BOOK_IN_ACTIVE_LOAN
+        - STOCK_BELOW_BORROWED
+        - ALREADY_IN_READLIST
+        - UPSTREAM_API_ERROR
+        - INTERNAL_ERROR
+
+    ApiErrorFieldDetail:
+      type: object
+      required: [field, message]
+      properties:
+        field:
+          type: string
+          example: email
+        message:
+          type: string
+          example: Format email tidak valid
+
+    ApiErrorDetail:
+      type: object
+      required: [code]
+      properties:
+        code:
+          $ref: '#/components/schemas/ApiErrorCode'
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApiErrorFieldDetail'
+
+    ApiErrorResponse:
+      type: object
+      required: [success, message, error]
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        message:
+          type: string
+          example: Validasi input gagal
+        error:
+          $ref: '#/components/schemas/ApiErrorDetail'
+
+    PaginationMeta:
+      type: object
+      required: [page, limit, total, totalPages]
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+        total:
+          type: integer
+          example: 24
+        totalPages:
+          type: integer
+          example: 3
+
+    UserProfile:
+      type: object
+      required: [id, name, email, role, createdAt]
+      properties:
+        id:
+          type: integer
+          example: 2
+        name:
+          type: string
+          example: Andi Pratama
+        nim:
+          type: string
+          nullable: true
+          example: F55122001
+        email:
+          type: string
+          format: email
+          example: andi@untad.ac.id
+        role:
+          $ref: '#/components/schemas/Role'
+        createdAt:
+          type: string
+          format: date-time
+
+    AuthPayload:
+      type: object
+      required: [token, expiresIn, user]
+      properties:
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        expiresIn:
+          type: integer
+          description: Masa berlaku token dalam detik (24 jam)
+          example: 86400
+        user:
+          $ref: '#/components/schemas/UserProfile'
+
+    RegisterRequest:
+      type: object
+      required: [name, nim, email, password]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          example: Andi Pratama
+        nim:
+          type: string
+          minLength: 3
+          example: F55122001
+        email:
+          type: string
+          format: email
+          example: andi@untad.ac.id
+        password:
+          type: string
+          minLength: 6
+          example: rahasia123
+
+    LoginRequest:
+      type: object
+      required: [identifier, password]
+      properties:
+        identifier:
+          type: string
+          description: Email atau NIM pengguna
+          example: F55122001
+        password:
+          type: string
+          example: rahasia123
+
+    LibraryBook:
+      type: object
+      required:
+        - id
+        - title
+        - author
+        - stockTotal
+        - stockAvailable
+        - description
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Struktur Data dan Algoritma
+        author:
+          type: string
+          example: Rinaldi Munir
+        isbn:
+          type: string
+          nullable: true
+          example: 978-602-1234-56-7
+        category:
+          type: string
+          nullable: true
+          example: Informatika
+        publishedYear:
+          type: integer
+          nullable: true
+          example: 2021
+        stockTotal:
+          type: integer
+          minimum: 0
+          example: 5
+        stockAvailable:
+          type: integer
+          minimum: 0
+          example: 4
+        description:
+          type: string
+          example: Buku referensi utama mata kuliah Struktur Data untuk mahasiswa Teknik Informatika.
+        coverUrl:
+          type: string
+          nullable: true
+          example: https://example.com/cover.jpg
+        isBorrowedByMe:
+          type: boolean
+          description: Hanya bernilai true/false jika request membawa JWT User
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateLibraryBookRequest:
+      type: object
+      required: [title, author, description, stockTotal]
+      properties:
+        title:
+          type: string
+          minLength: 1
+          example: Basis Data Lanjut
+        author:
+          type: string
+          minLength: 1
+          example: Abraham Silberschatz
+        isbn:
+          type: string
+          nullable: true
+          example: 978-007-8022-15-9
+        category:
+          type: string
+          nullable: true
+          example: Sistem Informasi
+        publishedYear:
+          type: integer
+          nullable: true
+          example: 2020
+        stockTotal:
+          type: integer
+          minimum: 1
+          example: 3
+        description:
+          type: string
+          minLength: 1
+          example: Pembahasan konsep perancangan basis data relasional, normalisasi, dan transaksi.
+        coverUrl:
+          type: string
+          format: uri
+          nullable: true
+
+    UpdateLibraryBookRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+        author:
+          type: string
+          minLength: 1
+        isbn:
+          type: string
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        publishedYear:
+          type: integer
+          nullable: true
+        stockTotal:
+          type: integer
+          minimum: 0
+        description:
+          type: string
+          minLength: 1
+        coverUrl:
+          type: string
+          format: uri
+          nullable: true
+
+    CreateLoanRequest:
+      type: object
+      required: [bookId]
+      properties:
+        bookId:
+          type: integer
+          example: 1
+
+    LoanItem:
+      type: object
+      required:
+        - id
+        - bookId
+        - bookTitle
+        - bookAuthor
+        - status
+        - borrowedAt
+        - dueDate
+        - isOverdue
+        - daysRemaining
+      properties:
+        id:
+          type: integer
+          example: 10
+        bookId:
+          type: integer
+          example: 1
+        bookTitle:
+          type: string
+          example: Struktur Data dan Algoritma
+        bookAuthor:
+          type: string
+          example: Rinaldi Munir
+        bookCoverUrl:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/LoanStatus'
+        borrowedAt:
+          type: string
+          format: date-time
+        dueDate:
+          type: string
+          format: date-time
+        returnedAt:
+          type: string
+          format: date-time
+          nullable: true
+        isOverdue:
+          type: boolean
+          example: false
+        daysRemaining:
+          type: integer
+          description: Negatif jika sudah melewati jatuh tempo
+          example: 5
+
+    AdminLoanItem:
+      allOf:
+        - $ref: '#/components/schemas/LoanItem'
+        - type: object
+          required: [borrower]
+          properties:
+            borrower:
+              type: object
+              required: [id, name, email]
+              properties:
+                id:
+                  type: integer
+                  example: 2
+                name:
+                  type: string
+                  example: Andi Pratama
+                nim:
+                  type: string
+                  nullable: true
+                  example: F55122001
+                email:
+                  type: string
+                  example: andi@untad.ac.id
+
+    PublicBookSummary:
+      type: object
+      required: [workId, title, authors, inReadlist]
+      properties:
+        workId:
+          type: string
+          pattern: ^OL[0-9]+W$
+          example: OL45804W
+        title:
+          type: string
+          example: Dune
+        authors:
+          type: array
+          items:
+            type: string
+          example: [Frank Herbert]
+        firstPublishYear:
+          type: integer
+          nullable: true
+          example: 1965
+        coverUrl:
+          type: string
+          nullable: true
+          example: https://covers.openlibrary.org/b/id/14625765-M.jpg
+        subjects:
+          type: array
+          items:
+            type: string
+          example: [Science fiction, Classic]
+        inReadlist:
+          type: boolean
+          example: false
+
+    PublicBookDetail:
+      allOf:
+        - $ref: '#/components/schemas/PublicBookSummary'
+        - type: object
+          properties:
+            description:
+              type: string
+              nullable: true
+              description: Null jika Open Library tidak menyediakan deskripsi pada work terkait
+              example: Set on the desert planet Arrakis...
+            descriptionFallback:
+              type: string
+              example: Deskripsi belum tersedia di Open Library.
+
+    ReadlistItem:
+      type: object
+      required: [id, workId, title, authors, createdAt]
+      properties:
+        id:
+          type: integer
+          example: 4
+        workId:
+          type: string
+          example: OL45804W
+        title:
+          type: string
+          example: Dune
+        authors:
+          type: array
+          items:
+            type: string
+          example: [Frank Herbert]
+        firstPublishYear:
+          type: integer
+          nullable: true
+          example: 1965
+        coverUrl:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+
+    AddReadlistRequest:
+      type: object
+      required: [workId]
+      properties:
+        workId:
+          type: string
+          pattern: ^OL[0-9]+W$
+          example: OL45804W
+
+    GraphQLRequest:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+          example: |
+            query KatalogRingkas {
+              libraryBooks(page: 1, limit: 5) {
+                items { id title author stockAvailable }
+                meta { total }
+              }
+            }
+        variables:
+          type: object
+          additionalProperties: true
+        operationName:
+          type: string
+          nullable: true
+
+    GraphQLResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          nullable: true
+          additionalProperties: true
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              message: { type: string }
+              path:
+                type: array
+                items:
+                  oneOf:
+                    - type: string
+                    - type: integer
+
+  responses:
+    UnauthorizedError:
+      description: Token tidak ada, tidak valid, atau kedaluwarsa
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+    ForbiddenError:
+      description: Peran pengguna tidak memiliki izin mengakses resource ini
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+    NotFoundError:
+      description: Data tidak ditemukan
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+    ConflictError:
+      description: Konflik aturan bisnis atau duplikasi data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+    ValidationError:
+      description: Input request tidak valid
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+    UpstreamError:
+      description: Open Library API gagal merespons atau timeout
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiErrorResponse'
+
+paths:
+  /api/v1/health:
+    get:
+      tags: [System]
+      summary: Cek kesehatan server dan SQLite
+      security: []
+      responses:
+        '200':
+          description: Server berjalan normal
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: Server sehat }
+                  data:
+                    type: object
+                    properties:
+                      status: { type: string, example: ok }
+                      database: { type: string, example: connected }
+                      timestamp: { type: string, format: date-time }
+
+  /api/openapi.yaml:
+    get:
+      tags: [Docs]
+      summary: Unduh spesifikasi OpenAPI 3.0.3 YAML
+      security: []
+      responses:
+        '200':
+          description: Berkas YAML OpenAPI
+          content:
+            application/yaml:
+              schema:
+                type: string
+
+  /api/docs:
+    get:
+      tags: [Docs]
+      summary: Halaman dokumentasi interaktif OpenAPI
+      security: []
+      responses:
+        '200':
+          description: Halaman HTML Swagger UI / Scalar
+          content:
+            text/html:
+              schema:
+                type: string
+
+  /api/v1/auth/register:
+    post:
+      tags: [Auth]
+      summary: Registrasi User baru (otomatis login)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Registrasi berhasil dan token JWT diberikan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: Registrasi berhasil }
+                  data:
+                    $ref: '#/components/schemas/AuthPayload'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login User (Email/NIM) atau Admin
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login berhasil
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: Login berhasil }
+                  data:
+                    $ref: '#/components/schemas/AuthPayload'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/v1/auth/me:
+    get:
+      tags: [Auth]
+      summary: Ambil profil pengguna yang sedang login
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Profil pengguna
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: Profil berhasil diambil }
+                  data:
+                    $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/v1/books:
+    get:
+      tags: [Library Books]
+      summary: Daftar & pencarian Buku Perpustakaan UNTAD
+      security:
+        - {}
+        - BearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+          description: Kata kunci judul, penulis, atau ISBN
+        - name: category
+          in: query
+          schema: { type: string }
+        - name: availableOnly
+          in: query
+          schema: { type: boolean, default: false }
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+      responses:
+        '200':
+          description: Daftar Buku Perpustakaan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: Daftar buku berhasil diambil }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LibraryBook'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+    post:
+      tags: [Admin Books]
+      summary: Tambah Buku Perpustakaan baru (Admin)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLibraryBookRequest'
+      responses:
+        '201':
+          description: Buku berhasil ditambahkan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: Buku berhasil ditambahkan }
+                  data:
+                    $ref: '#/components/schemas/LibraryBook'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /api/v1/books/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer }
+    get:
+      tags: [Library Books]
+      summary: Detail & deskripsi Buku Perpustakaan
+      security:
+        - {}
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Detail buku
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: Detail buku berhasil diambil }
+                  data:
+                    $ref: '#/components/schemas/LibraryBook'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags: [Admin Books]
+      summary: Edit Buku Perpustakaan & stok (Admin)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLibraryBookRequest'
+      responses:
+        '200':
+          description: Buku berhasil diperbarui
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: Buku berhasil diperbarui }
+                  data:
+                    $ref: '#/components/schemas/LibraryBook'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+
+    delete:
+      tags: [Admin Books]
+      summary: Hapus (soft-delete) Buku Perpustakaan (Admin)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Buku berhasil dihapus
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: Buku berhasil dihapus }
+                  data:
+                    type: object
+                    properties:
+                      id: { type: integer, example: 1 }
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+
+  /api/v1/loans/my:
+    get:
+      tags: [User Loans]
+      summary: Daftar peminjaman milik User yang sedang login
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [all, borrowed, overdue, returned]
+            default: all
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+      responses:
+        '200':
+          description: Daftar peminjaman User
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: Daftar peminjaman berhasil diambil }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LoanItem'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /api/v1/loans:
+    post:
+      tags: [User Loans]
+      summary: Pinjam Buku Perpustakaan secara self-service (User)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLoanRequest'
+      responses:
+        '201':
+          description: Peminjaman berhasil dicatat (jatuh tempo +7 hari)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: Buku berhasil dipinjam }
+                  data:
+                    $ref: '#/components/schemas/LoanItem'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+
+  /api/v1/loans/{id}/return:
+    patch:
+      tags: [User Loans]
+      summary: Kembalikan Buku Perpustakaan yang sedang dipinjam (User)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Buku berhasil dikembalikan dan stok bertambah
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: Buku berhasil dikembalikan }
+                  data:
+                    $ref: '#/components/schemas/LoanItem'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+
+  /api/v1/admin/loans:
+    get:
+      tags: [Admin Loans]
+      summary: Pantau seluruh buku yang dipinjam mahasiswa (Admin)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [borrowed, overdue, returned, all]
+            default: borrowed
+        - name: q
+          in: query
+          schema: { type: string }
+          description: Cari berdasarkan judul buku, nama peminjam, atau NIM
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+      responses:
+        '200':
+          description: Daftar peminjaman seluruh mahasiswa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: Data peminjaman berhasil diambil }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdminLoanItem'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /api/v1/public-books:
+    get:
+      tags: [Public Books]
+      summary: Cari Buku Publik melalui proxy Open Library API
+      security:
+        - {}
+        - BearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+          description: Kata kunci pencarian (jika kosong, gunakan subject default)
+        - name: subject
+          in: query
+          schema: { type: string, default: computer_science }
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 20, default: 10 }
+      responses:
+        '200':
+          description: Daftar Buku Publik dari Open Library
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: Buku publik berhasil diambil }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PublicBookSummary'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '502':
+          $ref: '#/components/responses/UpstreamError'
+
+  /api/v1/public-books/{workId}:
+    get:
+      tags: [Public Books]
+      summary: Ambil detail & deskripsi Buku Publik secara lazy dari Open Library
+      security:
+        - {}
+        - BearerAuth: []
+      parameters:
+        - name: workId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^OL[0-9]+W$
+          example: OL45804W
+      responses:
+        '200':
+          description: Detail Buku Publik
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: Detail buku publik berhasil diambil }
+                  data:
+                    $ref: '#/components/schemas/PublicBookDetail'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '502':
+          $ref: '#/components/responses/UpstreamError'
+
+  /api/v1/readlist:
+    get:
+      tags: [User Readlist]
+      summary: Daftar Readlist Buku Publik milik User
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string }
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+      responses:
+        '200':
+          description: Daftar Readlist User
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: Readlist berhasil diambil }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ReadlistItem'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+    post:
+      tags: [User Readlist]
+      summary: Tandai / simpan Buku Publik ke Readlist User
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddReadlistRequest'
+      responses:
+        '201':
+          description: Buku Publik berhasil ditambahkan ke Readlist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: Buku berhasil ditambahkan ke readlist }
+                  data:
+                    $ref: '#/components/schemas/ReadlistItem'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '502':
+          $ref: '#/components/responses/UpstreamError'
+
+  /api/v1/readlist/{workId}:
+    delete:
+      tags: [User Readlist]
+      summary: Hapus Buku Publik dari Readlist User
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: workId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: ^OL[0-9]+W$
+          example: OL45804W
+      responses:
+        '200':
+          description: Buku berhasil dihapus dari Readlist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: Buku berhasil dihapus dari readlist }
+                  data:
+                    type: object
+                    properties:
+                      workId: { type: string, example: OL45804W }
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /graphql:
+    post:
+      tags: [GraphQL]
+      summary: Endpoint GraphQL tunggal (Read-Only Query Aggregator)
+      security:
+        - {}
+        - BearerAuth: []
+      description: |
+        Satu-satunya endpoint GraphQL pada sistem ini (dibangun langsung dengan paket `graphql`).
+        Berperan sebagai *Query Aggregator* read-only untuk mengambil katalog maupun ringkasan dashboard.
+        Skema lengkap tersedia pada `docs/api/schema.graphql`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GraphQLRequest'
+      responses:
+        '200':
+          description: Hasil eksekusi GraphQL (data atau daftar errors)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GraphQLResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'

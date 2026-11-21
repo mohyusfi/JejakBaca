@@ -1,0 +1,136 @@
+enum Role {
+  USER
+  ADMIN
+}
+
+enum LoanStatusFilter {
+  ALL
+  BORROWED
+  OVERDUE
+  RETURNED
+}
+
+type PageInfo {
+  page: Int!
+  limit: Int!
+  total: Int!
+  totalPages: Int!
+}
+
+type LibraryBook {
+  id: Int!
+  title: String!
+  author: String!
+  isbn: String
+  category: String
+  publishedYear: Int
+  stockTotal: Int!
+  stockAvailable: Int!
+  description: String!
+  coverUrl: String
+  isBorrowedByMe: Boolean
+  createdAt: String!
+  updatedAt: String!
+}
+
+type BookConnection {
+  items: [LibraryBook!]!
+  meta: PageInfo!
+}
+
+type PublicBookSummary {
+  workId: String!
+  title: String!
+  authors: [String!]!
+  firstPublishYear: Int
+  coverUrl: String
+  subjects: [String!]!
+  inReadlist: Boolean!
+}
+
+type PublicBookDetail {
+  workId: String!
+  title: String!
+  authors: [String!]!
+  firstPublishYear: Int
+  coverUrl: String
+  subjects: [String!]!
+  description: String
+  descriptionFallback: String!
+  inReadlist: Boolean!
+}
+
+type PublicBookConnection {
+  items: [PublicBookSummary!]!
+  meta: PageInfo!
+}
+
+type LoanSummary {
+  id: Int!
+  bookId: Int!
+  bookTitle: String!
+  bookAuthor: String!
+  status: String!
+  borrowedAt: String!
+  dueDate: String!
+  returnedAt: String
+  isOverdue: Boolean!
+  daysRemaining: Int!
+}
+
+type ReadlistSummary {
+  id: Int!
+  workId: String!
+  title: String!
+  authors: [String!]!
+  firstPublishYear: Int
+  coverUrl: String
+  createdAt: String!
+}
+
+type UserOverview {
+  activeLoansCount: Int!
+  overdueLoansCount: Int!
+  readlistCount: Int!
+  activeLoans: [LoanSummary!]!
+  recentReadlist: [ReadlistSummary!]!
+}
+
+type AdminOverview {
+  totalBooks: Int!
+  lowStockBooksCount: Int!
+  activeLoansCount: Int!
+  overdueLoansCount: Int!
+  recentLoans: [LoanSummary!]!
+}
+
+type Query {
+  "Mengambil daftar Buku Perpustakaan UNTAD dengan filter pencarian dan ketersediaan (Akses: Tamu / User / Admin)"
+  libraryBooks(
+    q: String
+    category: String
+    availableOnly: Boolean = false
+    page: Int = 1
+    limit: Int = 10
+  ): BookConnection!
+
+  "Mengambil detail satu Buku Perpustakaan UNTAD (Akses: Tamu / User / Admin)"
+  libraryBook(id: Int!): LibraryBook
+
+  "Mengambil daftar Buku Publik melalui proxy Open Library (Akses: Tamu / User / Admin)"
+  publicBooks(
+    q: String
+    subject: String = "computer_science"
+    page: Int = 1
+    limit: Int = 10
+  ): PublicBookConnection!
+
+  "Mengambil detail & deskripsi satu Buku Publik secara lazy (Akses: Tamu / User / Admin)"
+  publicBookDetail(workId: String!): PublicBookDetail
+
+  "Ringkasan khusus User terautentikasi (Wajib JWT role USER)"
+  myOverview: UserOverview!
+
+  "Ringkasan & statistik khusus Admin terautentikasi (Wajib JWT role ADMIN)"
+  adminOverview(loanStatus: LoanStatusFilter = BORROWED): AdminOverview!
+}
