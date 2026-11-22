@@ -26,52 +26,57 @@ export function AppShell({ children }: { children: ReactNode }) {
         Langsung ke konten utama
       </a>
 
-      <header className="sticky top-0 z-30 bg-[var(--color-primary)] text-white">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6">
-          <div className="flex min-w-0 items-center gap-6">
-            <Link
-              to="/"
-              className="flex shrink-0 items-center gap-2.5 rounded-[var(--radius-control)] py-1 text-white focus-visible:outline-white"
-            >
-              <span className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-control)] border border-white/25 bg-white/10">
-                <BookOpen className="h-4 w-4" aria-hidden="true" />
+      <header className="sticky top-0 z-30 border-b border-white/15 bg-[var(--color-primary)] text-white">
+        <div className="mx-auto grid h-14 max-w-6xl grid-cols-[auto_1fr_auto] items-center gap-4 px-4 sm:h-16 sm:px-6">
+          <Link
+            to="/"
+            className="flex shrink-0 items-center gap-2.5 rounded-[var(--radius-control)] py-1 text-white focus-visible:outline-white"
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-[var(--radius-control)] border border-white/25 bg-white/10">
+              <BookOpen className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <span className="flex flex-col leading-none">
+              <span className="text-base font-bold tracking-tight">JejakBaca</span>
+              <span className="hidden text-[11px] font-medium text-white/80 sm:block">
+                Perpustakaan UNTAD
               </span>
-              <span className="flex flex-col leading-none">
-                <span className="text-base font-bold tracking-tight">JejakBaca</span>
-                <span className="hidden text-[11px] font-medium text-white/80 sm:block">
-                  Perpustakaan UNTAD
-                </span>
-              </span>
-            </Link>
+            </span>
+          </Link>
 
-            <nav
-              aria-label="Navigasi utama"
-              className="hidden items-center gap-1 md:flex"
-            >
-              {navItems.map((item) => {
-                const active = isNavItemActive(item, pathname);
-                const Icon = item.icon;
-                return (
+          <nav
+            aria-label="Navigasi utama"
+            className="hidden min-w-0 items-center justify-center gap-1 lg:flex"
+          >
+            {navItems.map((item, index) => {
+              const active = isNavItemActive(item, pathname);
+              return (
+                <div key={item.id} className="flex items-center">
+                  {index > 0 && (
+                    <span
+                      aria-hidden="true"
+                      className="mx-1.5 select-none text-white/40"
+                    >
+                      ·
+                    </span>
+                  )}
                   <Link
-                    key={item.id}
                     to={item.to}
                     aria-current={active ? 'page' : undefined}
                     className={cn(
-                      'inline-flex min-h-[38px] items-center gap-2 rounded-[var(--radius-control)] px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors duration-150 focus-visible:outline-white',
+                      'inline-flex min-h-[34px] items-center rounded-[var(--radius-control)] px-2.5 py-1 text-xs font-semibold tracking-wide whitespace-nowrap uppercase transition-colors duration-150 focus-visible:outline-white',
                       active
-                        ? 'bg-white text-[var(--color-primary)] font-semibold'
+                        ? 'bg-white text-[var(--color-primary)]'
                         : 'text-white/90 hover:bg-white/15 hover:text-white',
                     )}
                   >
-                    <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
                     <span>{item.label}</span>
                   </Link>
-                );
-              })}
-            </nav>
-          </div>
+                </div>
+              );
+            })}
+          </nav>
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center justify-end gap-2">
             <MockRolePopover />
 
             {user ? (
@@ -109,7 +114,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <main
         id="main-content"
-        className={cn('flex-1', hideBottomNav ? 'pb-8' : 'pb-20 md:pb-10')}
+        className={cn('flex-1', hideBottomNav ? 'pb-8' : 'pb-20 lg:pb-10')}
       >
         {children}
       </main>
@@ -117,7 +122,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {!hideBottomNav && (
         <nav
           aria-label="Navigasi seluler"
-          className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-border)] bg-[var(--color-surface)] pb-[env(safe-area-inset-bottom)] md:hidden"
+          className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-border)] bg-[var(--color-surface)] pb-[env(safe-area-inset-bottom)] lg:hidden"
         >
           <div
             className={cn(

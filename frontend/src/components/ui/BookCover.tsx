@@ -17,10 +17,10 @@ const SIZE_CLASSES: Record<NonNullable<BookCoverProps['size']>, string> = {
 };
 
 function buildCategoryCode(category?: string | null, code?: string | null): string {
-  if (code) return code.slice(0, 10);
-  if (!category) return 'KATALOG';
+  if (code) return code.slice(0, 8);
+  if (!category) return 'UNTAD';
   const words = category.trim().split(/\s+/);
-  if (words.length === 1) return words[0].slice(0, 8).toUpperCase();
+  if (words.length === 1) return words[0].slice(0, 4).toUpperCase();
   return words
     .slice(0, 3)
     .map((w) => w[0] ?? '')
@@ -36,7 +36,8 @@ export function BookCover({
   size = 'md',
   className,
 }: BookCoverProps) {
-  const [hasError, setHasError] = useState(false);
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const hasError = Boolean(src && failedSrc === src);
   const showImage = Boolean(src && !hasError);
   const shortTag = buildCategoryCode(category, code);
 
@@ -53,7 +54,7 @@ export function BookCover({
           src={src ?? undefined}
           alt={`Sampul buku ${title}`}
           loading="lazy"
-          onError={() => setHasError(true)}
+          onError={() => setFailedSrc(src ?? null)}
           className="h-full w-full object-cover"
         />
       ) : (
@@ -61,15 +62,12 @@ export function BookCover({
           aria-label={`Sampul tipografis ${title}`}
           className="flex h-full w-full flex-col justify-between bg-[var(--color-surface-subtle)] p-2"
         >
-          <div className="border-b border-[var(--color-border)] pb-1">
-            <span className="block truncate font-mono text-[10px] font-semibold tracking-wider text-[var(--color-primary)] uppercase">
-              {shortTag}
-            </span>
-          </div>
-          <p className="line-clamp-3 text-[11px] leading-tight font-semibold text-[var(--color-ink)]">
+          <span className="block truncate font-mono text-[9px] font-medium tracking-wider text-[var(--color-ink-subtle)] uppercase">
+            {shortTag}
+          </span>
+          <p className="line-clamp-3 text-[11px] leading-snug font-medium text-[var(--color-ink-muted)]">
             {title}
           </p>
-          <div className="h-1 w-6 rounded-full bg-[var(--color-primary)]/35" aria-hidden="true" />
         </div>
       )}
     </div>

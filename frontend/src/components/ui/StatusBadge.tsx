@@ -6,6 +6,7 @@ export type StatusTone = 'available' | 'low' | 'critical' | 'info' | 'neutral';
 export interface StatusBadgeProps {
   tone?: StatusTone;
   icon?: ReactNode;
+  showDot?: boolean;
   children: ReactNode;
   className?: string;
 }
@@ -32,6 +33,7 @@ const DOT_CLASSES: Record<StatusTone, string> = {
 export function StatusBadge({
   tone = 'neutral',
   icon,
+  showDot = true,
   children,
   className,
 }: StatusBadgeProps) {
@@ -47,12 +49,12 @@ export function StatusBadge({
         <span className="shrink-0" aria-hidden="true">
           {icon}
         </span>
-      ) : (
+      ) : showDot ? (
         <span
           className={cn('h-1.5 w-1.5 shrink-0 rounded-full', DOT_CLASSES[tone])}
           aria-hidden="true"
         />
-      )}
+      ) : null}
       <span>{children}</span>
     </span>
   );
