@@ -23,6 +23,22 @@ export function migrateDatabase(db) {
       created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
       updated_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
     );
+
+    CREATE TABLE IF NOT EXISTS books (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      author TEXT NOT NULL,
+      isbn TEXT,
+      category TEXT,
+      published_year INTEGER,
+      stock_total INTEGER NOT NULL DEFAULT 1,
+      stock_available INTEGER NOT NULL DEFAULT 1,
+      description TEXT NOT NULL,
+      cover_url TEXT,
+      deleted_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+      updated_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
+    );
   `);
 }
 

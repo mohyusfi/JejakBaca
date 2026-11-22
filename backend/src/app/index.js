@@ -4,10 +4,11 @@ import { corsMiddleware } from '../middleware/cors.js';
 import { requestLogger } from '../middleware/logger.js';
 import { parseJsonBody } from '../middleware/bodyParser.js';
 import { errorHandler, NotFoundError } from '../middleware/errorHandler.js';
-import { authMiddleware } from '../middleware/auth.js';
+import { authMiddleware, optionalAuthMiddleware, roleGuard } from '../middleware/auth.js';
 import { healthController } from '../controller/health.controller.js';
 import { docsController } from '../controller/docs.controller.js';
 import { authController } from '../controller/auth.controller.js';
+import { bookController } from '../controller/book.controller.js';
 
 /**
  * Membuat dan mengonfigurasi aplikasi HTTP
@@ -20,15 +21,22 @@ export function createApp(options = {}) {
 
   const router = new Router();
 
-  // Daftarkan rute sistem & dokumentasi inti
+  // 1. Rute sistem & dokumentasi inti
   router.get('/api/v1/health', healthController.getHealth);
   router.get('/api/openapi.yaml', docsController.serveOpenApiYaml);
   router.get('/api/docs', docsController.serveDocs);
 
-  // Daftarkan rute Autentikasi User & Admin
+  // 2. Rute Autentikasi User & Admin
   router.post('/api/v1/auth/register', authController.register);
   router.post('/api/v1/auth/login', authController.login);
   router.get('/api/v1/auth/me', authMiddleware, authController.me);
+
+  // 3. Rute Katalog & CRUD Buku Perpustakaan
+  router.get('/api/v1/books', optionalAuthMiddleware, bookController.getBooks);
+  router.get('/api/v1/books/:id', optionalAuthMiddleware, bookController.getBookById);
+  router.post('/api/v1/books', authMiddleware, roleGuard('admin'), bookController.createBook);
+  router.put('/api/v1/books/:id', authMiddleware, roleGuard('admin'), bookController.updateBook);
+  router.delete('/api/v1/books/:id', authMiddleware, roleGuard('admin'), bookController.deleteBook);
 
   /**
    * Request handler utama untuk node:http.createServer
@@ -80,7 +88,7 @@ export function createApp(options = {}) {
       const { route, params } = matchResult;
       req.params = params;
 
-      // 6. Eksekusi handler rute (termasuk route-level middleware seperti authMiddleware)
+      // 6. Eksekusi handler rute (termasuk route-level middleware)
       for (const handler of route.handlers) {
         await handler(req, res);
         if (res.writableEnded) {
