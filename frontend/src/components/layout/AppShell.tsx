@@ -102,6 +102,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             ) : (
               <Link
                 to="/login"
+                search={{ redirect: undefined }}
                 className="inline-flex min-h-[36px] items-center gap-1.5 rounded-[var(--radius-control)] bg-white px-3 py-1.5 text-xs font-semibold text-[var(--color-primary)] transition-colors hover:bg-white/90 focus-visible:outline-white"
               >
                 <LogIn className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
