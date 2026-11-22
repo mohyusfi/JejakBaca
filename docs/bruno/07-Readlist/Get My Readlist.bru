@@ -1,0 +1,29 @@
+meta {
+  name: Get My Readlist
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/readlist?page=1&limit=10
+  body: none
+  auth: inherit
+}
+
+params:query {
+  page: 1
+  limit: 10
+  ~q: algorithm
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response returns readlist items", function() {
+    const body = res.getBody();
+    expect(body.success).to.equal(true);
+    expect(body.data).to.be.an("array");
+  });
+}

@@ -1,0 +1,34 @@
+meta {
+  name: Admin List All Loans
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/v1/admin/loans?status=borrowed&page=1&limit=10
+  body: none
+  auth: bearer
+}
+
+params:query {
+  status: borrowed
+  page: 1
+  limit: 10
+  ~q: Andi
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response returns admin loans", function() {
+    const body = res.getBody();
+    expect(body.success).to.equal(true);
+    expect(body.data).to.be.an("array");
+  });
+}

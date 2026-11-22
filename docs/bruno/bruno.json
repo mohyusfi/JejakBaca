@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "API Perpustakaan UNTAD",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

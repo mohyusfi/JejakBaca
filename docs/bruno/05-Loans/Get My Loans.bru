@@ -1,0 +1,33 @@
+meta {
+  name: Get My Loans
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/loans/my?status=all&page=1&limit=10
+  body: none
+  auth: bearer
+}
+
+params:query {
+  status: all
+  page: 1
+  limit: 10
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response returns user loans", function() {
+    const body = res.getBody();
+    expect(body.success).to.equal(true);
+    expect(body.data).to.be.an("array");
+  });
+}

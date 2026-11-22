@@ -1,0 +1,27 @@
+meta {
+  name: Get Current Profile
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/v1/auth/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response contains user profile", function() {
+    const body = res.getBody();
+    expect(body.success).to.equal(true);
+    expect(body.data.email).to.be.a("string");
+  });
+}

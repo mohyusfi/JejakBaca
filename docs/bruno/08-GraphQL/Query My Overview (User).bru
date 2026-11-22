@@ -1,0 +1,52 @@
+meta {
+  name: Query My Overview (User)
+  type: graphql
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: graphql
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+body:graphql {
+  query MyOverview {
+    myOverview {
+      activeLoansCount
+      overdueLoansCount
+      readlistCount
+      activeLoans {
+        id
+        bookId
+        bookTitle
+        status
+        dueDate
+        isOverdue
+        daysRemaining
+      }
+      recentReadlist {
+        id
+        workId
+        title
+        authors
+      }
+    }
+  }
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("No GraphQL errors", function() {
+    const body = res.getBody();
+    expect(body.errors).to.be.undefined;
+    expect(body.data.myOverview).to.be.an("object");
+  });
+}

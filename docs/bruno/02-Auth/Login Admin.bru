@@ -1,0 +1,38 @@
+meta {
+  name: Login Admin
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "identifier": "{{adminEmail}}",
+    "password": "{{adminPassword}}"
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (body && body.data && body.data.token) {
+    bru.setEnvVar("adminToken", body.data.token);
+  }
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response contains admin token", function() {
+    const body = res.getBody();
+    expect(body.success).to.equal(true);
+    expect(body.data.user.role).to.equal("admin");
+    expect(body.data.token).to.be.a("string");
+  });
+}

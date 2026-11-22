@@ -1,0 +1,36 @@
+meta {
+  name: List Library Books
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/books?page=1&limit=10
+  body: none
+  auth: bearer
+}
+
+params:query {
+  page: 1
+  limit: 10
+  ~q: Struktur
+  ~category: Informatika
+  ~availableOnly: true
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response returns book list and meta", function() {
+    const body = res.getBody();
+    expect(body.success).to.equal(true);
+    expect(body.data).to.be.an("array");
+    expect(body.meta).to.be.an("object");
+  });
+}

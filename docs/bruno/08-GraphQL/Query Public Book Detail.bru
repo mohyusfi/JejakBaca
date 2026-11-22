@@ -1,0 +1,44 @@
+meta {
+  name: Query Public Book Detail
+  type: graphql
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: graphql
+  auth: none
+}
+
+body:graphql {
+  query PublicBookDetail($workId: String!) {
+    publicBookDetail(workId: $workId) {
+      workId
+      title
+      authors
+      firstPublishYear
+      coverUrl
+      subjects
+      description
+      descriptionFallback
+      inReadlist
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "workId": "{{workId}}"
+  }
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("No GraphQL errors", function() {
+    const body = res.getBody();
+    expect(body.errors).to.be.undefined;
+  });
+}

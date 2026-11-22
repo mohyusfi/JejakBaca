@@ -1,0 +1,29 @@
+meta {
+  name: Add to Readlist
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/readlist
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "workId": "{{workId}}"
+  }
+}
+
+tests {
+  test("Status code is 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Added to readlist", function() {
+    const body = res.getBody();
+    expect(body.success).to.equal(true);
+    expect(body.data.workId).to.be.a("string");
+  });
+}
