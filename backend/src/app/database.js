@@ -40,6 +40,10 @@ export function migrateDatabase(db) {
       updated_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
     );
 
+    CREATE INDEX IF NOT EXISTS idx_books_deleted_at ON books(deleted_at);
+    CREATE INDEX IF NOT EXISTS idx_books_category ON books(category);
+    CREATE INDEX IF NOT EXISTS idx_books_isbn ON books(isbn);
+
     CREATE TABLE IF NOT EXISTS loans (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
