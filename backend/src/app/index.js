@@ -8,6 +8,7 @@ import { authMiddleware, optionalAuthMiddleware, roleGuard } from '../middleware
 import { healthController } from '../controller/health.controller.js';
 import { docsController } from '../controller/docs.controller.js';
 import { authController } from '../controller/auth.controller.js';
+import { bookController } from '../controller/book.controller.js';
 import { loanController } from '../controller/loan.controller.js';
 import { publicBookController } from '../controller/publicBook.controller.js';
 import { readlistController } from '../controller/readlist.controller.js';
@@ -32,6 +33,13 @@ export function createApp(options = {}) {
   router.post('/api/v1/auth/register', authController.register);
   router.post('/api/v1/auth/login', authController.login);
   router.get('/api/v1/auth/me', authMiddleware, authController.me);
+
+  // 3. Rute Katalog & CRUD Buku Perpustakaan
+  router.get('/api/v1/books', optionalAuthMiddleware, bookController.getBooks);
+  router.get('/api/v1/books/:id', optionalAuthMiddleware, bookController.getBookById);
+  router.post('/api/v1/books', authMiddleware, roleGuard('admin'), bookController.createBook);
+  router.put('/api/v1/books/:id', authMiddleware, roleGuard('admin'), bookController.updateBook);
+  router.delete('/api/v1/books/:id', authMiddleware, roleGuard('admin'), bookController.deleteBook);
 
   // 4. Rute Transaksi Peminjaman & Pengembalian (User & Admin)
   router.get('/api/v1/loans/my', authMiddleware, roleGuard('user'), loanController.getMyLoans);
