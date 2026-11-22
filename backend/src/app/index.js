@@ -8,7 +8,6 @@ import { authMiddleware, optionalAuthMiddleware, roleGuard } from '../middleware
 import { healthController } from '../controller/health.controller.js';
 import { docsController } from '../controller/docs.controller.js';
 import { authController } from '../controller/auth.controller.js';
-import { bookController } from '../controller/book.controller.js';
 import { loanController } from '../controller/loan.controller.js';
 import { publicBookController } from '../controller/publicBook.controller.js';
 import { readlistController } from '../controller/readlist.controller.js';
@@ -24,22 +23,15 @@ export function createApp(options = {}) {
 
   const router = new Router();
 
-  // 1. Rute sistem & dokumentasi inti
+  // Daftarkan rute sistem & dokumentasi inti
   router.get('/api/v1/health', healthController.getHealth);
   router.get('/api/openapi.yaml', docsController.serveOpenApiYaml);
   router.get('/api/docs', docsController.serveDocs);
 
-  // 2. Rute Autentikasi User & Admin
+  // Daftarkan rute Autentikasi User & Admin
   router.post('/api/v1/auth/register', authController.register);
   router.post('/api/v1/auth/login', authController.login);
   router.get('/api/v1/auth/me', authMiddleware, authController.me);
-
-  // 3. Rute Katalog & CRUD Buku Perpustakaan
-  router.get('/api/v1/books', optionalAuthMiddleware, bookController.getBooks);
-  router.get('/api/v1/books/:id', optionalAuthMiddleware, bookController.getBookById);
-  router.post('/api/v1/books', authMiddleware, roleGuard('admin'), bookController.createBook);
-  router.put('/api/v1/books/:id', authMiddleware, roleGuard('admin'), bookController.updateBook);
-  router.delete('/api/v1/books/:id', authMiddleware, roleGuard('admin'), bookController.deleteBook);
 
   // 4. Rute Transaksi Peminjaman & Pengembalian (User & Admin)
   router.get('/api/v1/loans/my', authMiddleware, roleGuard('user'), loanController.getMyLoans);
@@ -50,12 +42,10 @@ export function createApp(options = {}) {
   // 5. Rute Proxy Buku Publik (Open Library API)
   router.get('/api/v1/public-books', optionalAuthMiddleware, publicBookController.searchPublicBooks);
   router.get('/api/v1/public-books/:workId', optionalAuthMiddleware, publicBookController.getPublicBookById);
-
   // 6. Rute Readlist Pribadi User
   router.get('/api/v1/readlist', authMiddleware, roleGuard('user'), readlistController.getReadlist);
   router.post('/api/v1/readlist', authMiddleware, roleGuard('user'), readlistController.addToReadlist);
   router.delete('/api/v1/readlist/:workId', authMiddleware, roleGuard('user'), readlistController.removeFromReadlist);
-
   /**
    * Request handler utama untuk node:http.createServer
    * @param {import('node:http').IncomingMessage} req
@@ -106,7 +96,7 @@ export function createApp(options = {}) {
       const { route, params } = matchResult;
       req.params = params;
 
-      // 6. Eksekusi handler rute (termasuk route-level middleware)
+      // 6. Eksekusi handler rute (termasuk route-level middleware seperti authMiddleware)
       for (const handler of route.handlers) {
         await handler(req, res);
         if (res.writableEnded) {
