@@ -10,5 +10,8 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "test": "node --test"
+  },
+  "dependencies": {
+    "graphql": "^17.1.0"
   }
 }
