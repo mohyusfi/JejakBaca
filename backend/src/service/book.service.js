@@ -137,7 +137,7 @@ export const bookService = {
     if (userId) {
       try {
         const loansStmt = db.prepare(`
-          SELECT book_id FROM loans WHERE user_id = ? AND status = 'BORROWED';
+          SELECT book_id FROM loans WHERE user_id = ? AND status = 'borrowed';
         `);
         const loans = loansStmt.all(userId);
         userBorrowedBookIds = new Set(loans.map((l) => l.book_id));
@@ -185,7 +185,7 @@ export const bookService = {
     if (userId) {
       try {
         const loanStmt = db.prepare(`
-          SELECT id FROM loans WHERE user_id = ? AND book_id = ? AND status = 'BORROWED' LIMIT 1;
+          SELECT id FROM loans WHERE user_id = ? AND book_id = ? AND status = 'borrowed' LIMIT 1;
         `);
         const loan = loanStmt.get(userId, bookId);
         isBorrowedByMe = Boolean(loan);
@@ -289,7 +289,10 @@ export const bookService = {
         details.push({ field: 'stockTotal', message: 'Stok total tidak boleh negatif' });
       } else {
         newStockTotal = parsedStock;
-        const currentlyBorrowed = current.stock_total - current.stock_available;
+        const activeLoanRow = db
+          .prepare("SELECT COUNT(*) AS total FROM loans WHERE book_id = ? AND status = 'borrowed';")
+          .get(bookId);
+        const currentlyBorrowed = activeLoanRow ? Number(activeLoanRow.total) : 0;
         if (newStockTotal < currentlyBorrowed) {
           throw new ConflictError(
             `Stok total (${newStockTotal}) tidak boleh kurang dari buku yang sedang dipinjam (${currentlyBorrowed})`,
@@ -347,7 +350,15 @@ export const bookService = {
       throw new NotFoundError('Buku tidak ditemukan');
     }
 
-    // Catatan untuk Issue #7: tolak jika sedang ada peminjaman aktif (BOOK_IN_ACTIVE_LOAN)
+    const activeLoanRow = db
+      .prepare("SELECT COUNT(*) AS total FROM loans WHERE book_id = ? AND status = 'borrowed';")
+      .get(bookId);
+    if (activeLoanRow && Number(activeLoanRow.total) > 0) {
+      throw new ConflictError(
+        'Buku tidak dapat dihapus karena masih memiliki peminjaman aktif',
+        'BOOK_IN_ACTIVE_LOAN'
+      );
+    }
 
     const deleteStmt = db.prepare(`
       UPDATE books

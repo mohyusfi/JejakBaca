@@ -39,6 +39,23 @@ export function migrateDatabase(db) {
       created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
       updated_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
     );
+
+    CREATE TABLE IF NOT EXISTS loans (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      book_id INTEGER NOT NULL,
+      status TEXT NOT NULL CHECK(status IN ('borrowed', 'returned')) DEFAULT 'borrowed',
+      borrowed_at TEXT NOT NULL,
+      due_date TEXT NOT NULL,
+      returned_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+      updated_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      FOREIGN KEY (book_id) REFERENCES books(id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_loans_user_status ON loans(user_id, status);
+    CREATE INDEX IF NOT EXISTS idx_loans_book_status ON loans(book_id, status);
   `);
 }
 

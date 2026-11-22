@@ -9,6 +9,7 @@ import { healthController } from '../controller/health.controller.js';
 import { docsController } from '../controller/docs.controller.js';
 import { authController } from '../controller/auth.controller.js';
 import { bookController } from '../controller/book.controller.js';
+import { loanController } from '../controller/loan.controller.js';
 
 /**
  * Membuat dan mengonfigurasi aplikasi HTTP
@@ -37,6 +38,12 @@ export function createApp(options = {}) {
   router.post('/api/v1/books', authMiddleware, roleGuard('admin'), bookController.createBook);
   router.put('/api/v1/books/:id', authMiddleware, roleGuard('admin'), bookController.updateBook);
   router.delete('/api/v1/books/:id', authMiddleware, roleGuard('admin'), bookController.deleteBook);
+
+  // 4. Rute Transaksi Peminjaman & Pengembalian (User & Admin)
+  router.get('/api/v1/loans/my', authMiddleware, roleGuard('user'), loanController.getMyLoans);
+  router.post('/api/v1/loans', authMiddleware, roleGuard('user'), loanController.borrowBook);
+  router.patch('/api/v1/loans/:id/return', authMiddleware, roleGuard('user'), loanController.returnLoan);
+  router.get('/api/v1/admin/loans', authMiddleware, roleGuard('admin'), loanController.getAdminLoans);
 
   /**
    * Request handler utama untuk node:http.createServer
