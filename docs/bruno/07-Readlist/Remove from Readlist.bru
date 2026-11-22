@@ -1,0 +1,26 @@
+meta {
+  name: Remove from Readlist
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/readlist/:workId
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workId: {{workId}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Removed from readlist", function() {
+    const body = res.getBody();
+    expect(body.success).to.equal(true);
+  });
+}

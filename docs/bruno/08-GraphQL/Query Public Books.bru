@@ -1,0 +1,52 @@
+meta {
+  name: Query Public Books
+  type: graphql
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: graphql
+  auth: none
+}
+
+body:graphql {
+  query PublicBooks($subject: String, $page: Int, $limit: Int) {
+    publicBooks(subject: $subject, page: $page, limit: $limit) {
+      items {
+        workId
+        title
+        authors
+        firstPublishYear
+        coverUrl
+        inReadlist
+      }
+      meta {
+        page
+        limit
+        total
+        totalPages
+      }
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "subject": "computer_science",
+    "page": 1,
+    "limit": 5
+  }
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("No GraphQL errors", function() {
+    const body = res.getBody();
+    expect(body.errors).to.be.undefined;
+    expect(body.data.publicBooks.items).to.be.an("array");
+  });
+}

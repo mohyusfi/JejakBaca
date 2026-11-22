@@ -1,0 +1,31 @@
+meta {
+  name: Get Library Book Detail
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/books/:id
+  body: none
+  auth: bearer
+}
+
+params:path {
+  id: {{bookId}}
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response returns book detail", function() {
+    const body = res.getBody();
+    expect(body.success).to.equal(true);
+    expect(body.data.id).to.be.a("number");
+  });
+}

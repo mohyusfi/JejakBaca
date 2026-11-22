@@ -1,0 +1,34 @@
+meta {
+  name: Search Public Books
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/public-books?subject=computer_science&page=1&limit=10
+  body: none
+  auth: bearer
+}
+
+params:query {
+  subject: computer_science
+  page: 1
+  limit: 10
+  ~q: algorithms
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response returns public books", function() {
+    const body = res.getBody();
+    expect(body.success).to.equal(true);
+    expect(body.data).to.be.an("array");
+  });
+}

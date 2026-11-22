@@ -1,0 +1,33 @@
+meta {
+  name: Update Library Book
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/api/v1/books/:id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: {{bookId}}
+}
+
+body:json {
+  {
+    "title": "Basis Data Lanjut (Edisi Revisi)",
+    "stockTotal": 5
+  }
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Book updated successfully", function() {
+    const body = res.getBody();
+    expect(body.success).to.equal(true);
+  });
+}

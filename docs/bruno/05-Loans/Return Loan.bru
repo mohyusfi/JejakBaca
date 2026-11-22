@@ -1,0 +1,31 @@
+meta {
+  name: Return Loan
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/loans/:id/return
+  body: none
+  auth: bearer
+}
+
+params:path {
+  id: {{loanId}}
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Loan returned successfully", function() {
+    const body = res.getBody();
+    expect(body.success).to.equal(true);
+    expect(body.data.status).to.equal("returned");
+  });
+}

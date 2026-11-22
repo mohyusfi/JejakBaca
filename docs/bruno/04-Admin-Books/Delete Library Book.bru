@@ -1,0 +1,26 @@
+meta {
+  name: Delete Library Book
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/books/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: {{bookId}}
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Book deleted successfully", function() {
+    const body = res.getBody();
+    expect(body.success).to.equal(true);
+  });
+}
