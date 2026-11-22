@@ -33,6 +33,9 @@ export const config = {
   adminPassword: process.env.ADMIN_PASSWORD || 'Admin123!',
   adminName: process.env.ADMIN_NAME || 'Administrator Perpustakaan',
   openLibraryBaseUrl: process.env.OPEN_LIBRARY_BASE_URL || 'https://openlibrary.org',
+  openLibraryUserAgent: process.env.OPEN_LIBRARY_USER_AGENT || 'UNTAD-Library-Proxy/1.0 (library@untad.ac.id)',
+  openLibraryTimeoutMs: Number(process.env.OPEN_LIBRARY_TIMEOUT_MS) || 8000,
+  openLibraryCacheTtlMs: Number(process.env.OPEN_LIBRARY_CACHE_TTL_MS) || 5 * 60 * 1000,
 };
 
 export default config;
