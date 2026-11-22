@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { useNavigate, useRouterState } from '@tanstack/react-router';
 import {
   useCallback,
   useEffect,
@@ -20,23 +21,39 @@ import type { ActorState, AuthPayload, UserProfile } from '../../types/domain';
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
+  const pathname = useRouterState({
+    select: (state) => state.location.pathname,
+  });
+  const navigate = useNavigate();
+
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isHydrating, setIsHydrating] = useState<boolean>(() => Boolean(getAuthToken()));
 
   const clearSession = useCallback(
     (notifyExpired: boolean) => {
+      const hadToken = Boolean(getAuthToken());
       setAuthToken(null);
       setUser(null);
       queryClient.clear();
-      if (notifyExpired) {
+      if (notifyExpired && hadToken) {
         showToast({
           title: 'Sesi berakhir',
           description: 'Silakan masuk kembali untuk melanjutkan.',
           tone: 'warning',
         });
+        const isProtected =
+          pathname === '/loans' ||
+          pathname === '/readlist' ||
+          pathname.startsWith('/admin');
+        if (isProtected) {
+          navigate({
+            to: '/login',
+            search: { redirect: pathname },
+          });
+        }
       }
     },
-    [queryClient, showToast],
+    [queryClient, showToast, pathname, navigate],
   );
 
   const refreshSession = useCallback(async (): Promise<UserProfile | null> => {
@@ -53,13 +70,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(profile);
       return profile;
     } catch {
-      setAuthToken(null);
-      setUser(null);
+      clearSession(true);
       return null;
     } finally {
       setIsHydrating(false);
     }
-  }, []);
+  }, [clearSession]);
 
   useEffect(() => {
     const token = getAuthToken();
@@ -73,8 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
       .catch(() => {
         if (active) {
-          setAuthToken(null);
-          setUser(null);
+          clearSession(true);
         }
       })
       .finally(() => {
@@ -84,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [clearSession]);
 
   useEffect(() => {
     return registerUnauthorizedHandler(() => {
@@ -103,7 +118,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     clearSession(false);
-  }, [clearSession]);
+    const isProtected =
+      pathname === '/loans' ||
+      pathname === '/readlist' ||
+      pathname.startsWith('/admin');
+    if (isProtected) {
+      navigate({ to: '/' });
+    }
+  }, [clearSession, pathname, navigate]);
 
   const switchMockRole = useCallback(
     async (role: ActorState) => {

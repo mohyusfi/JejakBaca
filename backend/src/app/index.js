@@ -10,6 +10,7 @@ import { docsController } from '../controller/docs.controller.js';
 import { authController } from '../controller/auth.controller.js';
 import { bookController } from '../controller/book.controller.js';
 import { loanController } from '../controller/loan.controller.js';
+import { publicBookController } from '../controller/publicBook.controller.js';
 
 /**
  * Membuat dan mengonfigurasi aplikasi HTTP
@@ -44,6 +45,10 @@ export function createApp(options = {}) {
   router.post('/api/v1/loans', authMiddleware, roleGuard('user'), loanController.borrowBook);
   router.patch('/api/v1/loans/:id/return', authMiddleware, roleGuard('user'), loanController.returnLoan);
   router.get('/api/v1/admin/loans', authMiddleware, roleGuard('admin'), loanController.getAdminLoans);
+
+  // 5. Rute Proxy Buku Publik (Open Library API)
+  router.get('/api/v1/public-books', optionalAuthMiddleware, publicBookController.searchPublicBooks);
+  router.get('/api/v1/public-books/:workId', optionalAuthMiddleware, publicBookController.getPublicBookById);
 
   /**
    * Request handler utama untuk node:http.createServer

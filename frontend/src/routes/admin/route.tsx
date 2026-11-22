@@ -1,4 +1,5 @@
 import { createFileRoute, Link, Outlet, useRouterState } from '@tanstack/react-router';
+import { AdminRouteGuard } from '../../components/layout/RouteGuard';
 import { ZoneHeader } from '../../components/layout/ZoneHeader';
 import { cn } from '../../lib/cn';
 
@@ -7,6 +8,14 @@ export const Route = createFileRoute('/admin')({
 });
 
 function AdminLayout() {
+  return (
+    <AdminRouteGuard>
+      <AdminLayoutContent />
+    </AdminRouteGuard>
+  );
+}
+
+function AdminLayoutContent() {
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
