@@ -23,7 +23,6 @@ export function migrateDatabase(db) {
       created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
       updated_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
     );
-
     CREATE TABLE IF NOT EXISTS books (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
@@ -43,7 +42,6 @@ export function migrateDatabase(db) {
     CREATE INDEX IF NOT EXISTS idx_books_deleted_at ON books(deleted_at);
     CREATE INDEX IF NOT EXISTS idx_books_category ON books(category);
     CREATE INDEX IF NOT EXISTS idx_books_isbn ON books(isbn);
-
     CREATE TABLE IF NOT EXISTS loans (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
