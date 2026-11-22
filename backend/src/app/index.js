@@ -4,8 +4,10 @@ import { corsMiddleware } from '../middleware/cors.js';
 import { requestLogger } from '../middleware/logger.js';
 import { parseJsonBody } from '../middleware/bodyParser.js';
 import { errorHandler, NotFoundError } from '../middleware/errorHandler.js';
+import { authMiddleware } from '../middleware/auth.js';
 import { healthController } from '../controller/health.controller.js';
 import { docsController } from '../controller/docs.controller.js';
+import { authController } from '../controller/auth.controller.js';
 
 /**
  * Membuat dan mengonfigurasi aplikasi HTTP
@@ -13,7 +15,7 @@ import { docsController } from '../controller/docs.controller.js';
  * @returns {{ requestHandler: Function, router: Router }}
  */
 export function createApp(options = {}) {
-  // Inisialisasi koneksi SQLite
+  // Inisialisasi koneksi SQLite, migrasi skema tabel, dan seed akun admin
   initDb(options.dbPath);
 
   const router = new Router();
@@ -22,6 +24,11 @@ export function createApp(options = {}) {
   router.get('/api/v1/health', healthController.getHealth);
   router.get('/api/openapi.yaml', docsController.serveOpenApiYaml);
   router.get('/api/docs', docsController.serveDocs);
+
+  // Daftarkan rute Autentikasi User & Admin
+  router.post('/api/v1/auth/register', authController.register);
+  router.post('/api/v1/auth/login', authController.login);
+  router.get('/api/v1/auth/me', authMiddleware, authController.me);
 
   /**
    * Request handler utama untuk node:http.createServer
@@ -73,7 +80,7 @@ export function createApp(options = {}) {
       const { route, params } = matchResult;
       req.params = params;
 
-      // 6. Eksekusi handler rute
+      // 6. Eksekusi handler rute (termasuk route-level middleware seperti authMiddleware)
       for (const handler of route.handlers) {
         await handler(req, res);
         if (res.writableEnded) {
