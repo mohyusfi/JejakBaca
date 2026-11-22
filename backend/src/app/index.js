@@ -12,6 +12,7 @@ import { bookController } from '../controller/book.controller.js';
 import { loanController } from '../controller/loan.controller.js';
 import { publicBookController } from '../controller/publicBook.controller.js';
 import { readlistController } from '../controller/readlist.controller.js';
+import { graphqlController } from '../controller/graphql.controller.js';
 
 /**
  * Membuat dan mengonfigurasi aplikasi HTTP
@@ -54,6 +55,9 @@ export function createApp(options = {}) {
   router.get('/api/v1/readlist', authMiddleware, roleGuard('user'), readlistController.getReadlist);
   router.post('/api/v1/readlist', authMiddleware, roleGuard('user'), readlistController.addToReadlist);
   router.delete('/api/v1/readlist/:workId', authMiddleware, roleGuard('user'), readlistController.removeFromReadlist);
+
+  // 7. Endpoint GraphQL Tunggal (Read-Only Query Aggregator)
+  router.post('/graphql', optionalAuthMiddleware, graphqlController.handleGraphQL);
   /**
    * Request handler utama untuk node:http.createServer
    * @param {import('node:http').IncomingMessage} req
