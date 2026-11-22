@@ -72,7 +72,7 @@ export function createInitialMockState(): MockState {
       stockAvailable: 4,
       description:
         'Buku referensi utama mata kuliah Struktur Data untuk mahasiswa Teknik Informatika UNTAD. Membahas senarai berantai, tumpukan, antrean, pohon biner, graf, dan analisis kompleksitas algoritma.',
-      coverUrl: null,
+      coverUrl: '/books.png',
       createdAt: '2026-08-20T08:00:00.000Z',
       updatedAt: '2026-10-12T08:00:00.000Z',
     },
@@ -87,7 +87,7 @@ export function createInitialMockState(): MockState {
       stockAvailable: 1,
       description:
         'Pembahasan konsep perancangan basis data relasional, normalisasi hingga BCNF, pengindeksan B+ Tree, pengendalian konkurensi, dan pemulihan transaksi.',
-      coverUrl: null,
+      coverUrl: '/books.png',
       createdAt: '2026-08-21T08:00:00.000Z',
       updatedAt: '2026-10-15T08:00:00.000Z',
     },

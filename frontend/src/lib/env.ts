@@ -7,5 +7,5 @@ export function getAuthStorageKey(): string {
 }
 
 export function getMockStateStorageKey(): string {
-  return 'jejakbaca.mock.state.v1';
+  return 'jejakbaca.mock.state.v2';
 }

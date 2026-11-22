@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { createFileRoute } from '@tanstack/react-router';
-import { AlertCircle, ChevronDown, RefreshCw } from 'lucide-react';
+import { Link, createFileRoute } from '@tanstack/react-router';
+import { AlertCircle, ChevronDown, Compass, Library, RefreshCw } from 'lucide-react';
 import {
   CatalogEmptyState,
   CatalogFilterBar,
@@ -8,15 +8,11 @@ import {
   LibraryBookDetailPanel,
   LibraryBookRow,
 } from '../components/catalog';
-import { ZoneHeader } from '../components/layout/ZoneHeader';
 import { Button } from '../components/ui/Button';
 import { BookCompartmentSkeleton } from '../components/ui/Skeleton';
 import { useInfiniteLibraryBooks } from '../hooks/useLibraryBooks';
 import { cn } from '../lib/cn';
-import {
-  CATALOG_LIMIT_OPTIONS,
-  DEFAULT_CATALOG_LIMIT,
-} from '../services/book-service';
+import { DEFAULT_CATALOG_LIMIT } from '../services/book-service';
 
 export interface CatalogSearchParams {
   q?: string;
@@ -90,6 +86,7 @@ function LibraryCatalogPage() {
     (patch: Partial<CatalogSearchParams>, replace = true) => {
       void navigate({
         replace,
+        resetScroll: false,
         search: (prev) => {
           const next: CatalogSearchParams = { ...prev, ...patch };
           return validateCatalogSearch({
@@ -231,19 +228,6 @@ function LibraryCatalogPage() {
     [updateSearch],
   );
 
-  const handleLimitChange = useCallback(
-    (nextLimit: number) => {
-      updateSearch(
-        {
-          limit: nextLimit === DEFAULT_CATALOG_LIMIT ? undefined : nextLimit,
-          page: undefined,
-        },
-        true,
-      );
-    },
-    [updateSearch],
-  );
-
   const handleResetFilters = useCallback(() => {
     updateSearch(
       {
@@ -267,38 +251,47 @@ function LibraryCatalogPage() {
     updateSearch({ bookId: undefined }, true);
   }, [updateSearch]);
 
-  const limitOptions = useMemo(() => {
-    const options = new Set<number>(CATALOG_LIMIT_OPTIONS);
-    options.add(limit);
-    return Array.from(options).sort((a, b) => a - b);
-  }, [limit]);
-
   const isDetailOpen = selectedBookId !== null;
 
   return (
     <div>
-      <ZoneHeader
-        kicker="Koleksi Sirkulasi UNTAD"
-        title="Katalog Perpustakaan"
-        description="Telusuri Buku Perpustakaan UNTAD yang tersedia untuk Peminjaman mandiri (kuota maks 3 buku, jatuh tempo 7 hari)."
-        rightSlot={
-          <div className="inline-flex items-center gap-3 rounded-[var(--radius-control)] border border-white/20 bg-white/10 px-3.5 py-2 text-xs text-white">
-            <div>
-              <p className="text-white/75">Koleksi Terindeks</p>
-              <p className="font-mono text-sm font-bold tabular-nums">
-                {booksQuery.isLoading ? '...' : `${totalItems} judul`}
-              </p>
-            </div>
-            <span className="h-6 w-px bg-white/20" aria-hidden="true" />
-            <div>
-              <p className="text-white/75">Akses Tamu</p>
-              <p className="font-semibold">Baca &amp; Telusuri</p>
-            </div>
-          </div>
-        }
-      />
+      <section
+        aria-label="Katalog Perpustakaan"
+        className="bg-[var(--color-primary)] text-white"
+      >
+        <div className="mx-auto flex max-w-3xl flex-col items-center px-4 py-12 text-center sm:px-6 sm:py-16">
+          <h1 className="text-3xl leading-tight font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
+            Selamat Datang di
+            <br />
+            JejakBaca
+          </h1>
+          <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/85 sm:text-base">
+            Telusuri Buku Perpustakaan UNTAD yang tersedia untuk Peminjaman mandiri
+            (kuota maks 3 buku, jatuh tempo 7 hari).
+          </p>
 
-      <div className="mx-auto max-w-6xl space-y-4 px-4 py-5 sm:px-6">
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+            <a
+              href="#katalog-buku"
+              className="inline-flex min-h-[42px] items-center gap-2 rounded-[var(--radius-control)] bg-white px-5 py-2.5 text-sm font-semibold text-[var(--color-primary)] transition-colors hover:bg-white/90"
+            >
+              <Library className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span className="tabular-nums">
+                {booksQuery.isLoading ? 'Memuat Katalog...' : `${totalItems} Judul Tersedia`}
+              </span>
+            </a>
+            <Link
+              to="/public-books"
+              className="inline-flex min-h-[42px] items-center gap-2 rounded-[var(--radius-control)] border border-white/30 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/20"
+            >
+              <Compass className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>Jelajah Buku Publik</span>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <div id="katalog-buku" className="mx-auto max-w-6xl space-y-5 px-4 py-6 sm:px-6">
         <CatalogFilterBar
           q={q}
           category={category}
@@ -307,52 +300,6 @@ function LibraryCatalogPage() {
           onCategoryChange={handleCategoryChange}
           onAvailableOnlyChange={handleAvailableOnlyChange}
         />
-
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-xs text-[var(--color-ink-muted)]">
-          <p className="tabular-nums">
-            {booksQuery.isLoading ? (
-              'Memuat daftar Buku Perpustakaan...'
-            ) : (
-              <>
-                Menampilkan{' '}
-                <span className="font-semibold text-[var(--color-ink)]">
-                  {books.length}
-                </span>{' '}
-                dari{' '}
-                <span className="font-semibold text-[var(--color-ink)]">
-                  {totalItems}
-                </span>{' '}
-                buku
-                {totalPages > 1 && (
-                  <span className="ml-1.5 text-[var(--color-ink-subtle)]">
-                    (halaman <span className="font-mono">{loadedPages}/{totalPages}</span>)
-                  </span>
-                )}
-              </>
-            )}
-          </p>
-
-          <div className="flex items-center gap-2">
-            <label
-              htmlFor="catalog-limit-select"
-              className="font-medium text-[var(--color-ink-muted)]"
-            >
-              Per muat
-            </label>
-            <select
-              id="catalog-limit-select"
-              value={String(limit)}
-              onChange={(e) => handleLimitChange(Number(e.target.value))}
-              className="min-h-[32px] rounded-[var(--radius-control)] border border-[var(--color-border)] bg-[var(--color-surface-subtle)] px-2.5 py-1 font-mono text-xs font-semibold text-[var(--color-ink)] tabular-nums focus:border-[var(--color-primary)] focus:outline-none"
-            >
-              {limitOptions.map((option) => (
-                <option key={option} value={String(option)}>
-                  {option} buku
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
 
         <div
           className={cn(
@@ -403,7 +350,12 @@ function LibraryCatalogPage() {
 
             {books.length > 0 && (
               <>
-                <div className="space-y-3">
+                <div
+                  className={cn(
+                    'grid grid-cols-1 gap-4 md:grid-cols-2',
+                    isDetailOpen ? 'lg:grid-cols-2' : 'lg:grid-cols-3',
+                  )}
+                >
                   {books.map((book) => (
                     <LibraryBookRow
                       key={book.id}

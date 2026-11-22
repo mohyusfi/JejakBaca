@@ -56,9 +56,10 @@ describe('Katalog Perpustakaan (/) — Issue #15', () => {
     ).toBeInTheDocument();
 
     expect(router.state.location.pathname).toBe('/');
-    expect(screen.getByText('Koleksi Sirkulasi UNTAD')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Katalog Perpustakaan' })).toBeInTheDocument();
-    expect(screen.getByText('14 judul')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /Selamat Datang di\s*JejakBaca/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('14 Judul Tersedia')).toBeInTheDocument();
 
     const main = screen.getByRole('main');
     expect(main).not.toHaveTextContent(/readlist/i);
@@ -90,9 +91,11 @@ describe('Katalog Perpustakaan (/) — Issue #15', () => {
     expect(emptyStockMatches.length).toBeGreaterThan(0);
     expect(emptyStockMatches[0]).toHaveClass('tabular-nums');
 
-    // Fallback sampul tipografis saat coverUrl kosong
+    // Sampul gambar buku & fallback tipografis saat coverUrl kosong
+    const coverImg = screen.getByAltText('Sampul buku Struktur Data dan Algoritma');
+    expect(coverImg).toHaveAttribute('src', '/books.png');
     expect(
-      screen.getByLabelText('Sampul tipografis Struktur Data dan Algoritma'),
+      screen.getByLabelText('Sampul tipografis Rekayasa Perangkat Lunak Modern'),
     ).toBeInTheDocument();
   });
 
@@ -128,7 +131,8 @@ describe('Katalog Perpustakaan (/) — Issue #15', () => {
       await screen.findByRole('button', { name: 'Struktur Data dan Algoritma' }),
     ).toBeInTheDocument();
 
-    // Filter kategori Informatika
+    // Buka modal filter lalu pilih kategori Informatika
+    await user.click(screen.getByRole('button', { name: 'Filter katalog' }));
     const categoryGroup = screen.getByRole('group', { name: 'Filter kategori koleksi' });
     await user.click(within(categoryGroup).getByRole('button', { name: 'Informatika' }));
 
@@ -154,6 +158,9 @@ describe('Katalog Perpustakaan (/) — Issue #15', () => {
         screen.queryByRole('button', { name: 'Rekayasa Perangkat Lunak Modern' }),
       ).not.toBeInTheDocument();
     });
+
+    // Tutup modal filter
+    await user.click(screen.getByRole('button', { name: 'Selesai' }));
 
     // Pencarian yang tidak cocok memunculkan empty state + tombol Reset Filter
     const searchInput = screen.getByLabelText('Cari judul, penulis, atau ISBN');
@@ -196,12 +203,6 @@ describe('Katalog Perpustakaan (/) — Issue #15', () => {
         screen.getByRole('button', { name: 'Aljabar Linear Elementer & Aplikasi' }),
       ).toBeInTheDocument();
       expect(router.state.location.search).toMatchObject({ page: 2 });
-    });
-
-    // Ubah limit ke 20 buku -> URL sinkron & reset ke page 1
-    await user.selectOptions(screen.getByLabelText('Per muat'), '20');
-    await waitFor(() => {
-      expect(router.state.location.search).toMatchObject({ limit: 20 });
       expect(screen.getByText('Semua 14 Buku Perpustakaan telah ditampilkan.')).toBeInTheDocument();
     });
   });
