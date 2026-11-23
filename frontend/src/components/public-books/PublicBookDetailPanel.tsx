@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
-import { AlertCircle, BookmarkCheck, Globe, RefreshCw, X } from 'lucide-react';
+import { AlertCircle, BookmarkCheck, BookmarkPlus, Globe, RefreshCw, Trash2, X } from 'lucide-react';
 import { usePublicBookDetail } from '../../hooks/usePublicBooks';
+import { useReadlistAction } from '../../hooks/useReadlistAction';
 import { cn } from '../../lib/cn';
 import { formatAuthors } from '../../lib/format';
 import { BookCover } from '../ui/BookCover';
@@ -20,6 +21,18 @@ export function PublicBookDetailPanel({ workId, onClose }: PublicBookDetailPanel
     error,
     refetch,
   } = usePublicBookDetail(workId);
+
+  const {
+    actor,
+    canShowAction,
+    isLoading: isActionLoading,
+    handleAdd,
+    handleRemove,
+  } = useReadlistAction({
+    workId: detail?.workId ?? workId ?? '',
+    title: detail?.title ?? '',
+    inReadlist: detail?.inReadlist ?? false,
+  });
 
   useEffect(() => {
     if (!workId) return;
@@ -202,6 +215,42 @@ export function PublicBookDetailPanel({ workId, onClose }: PublicBookDetailPanel
                 Koleksi ini bersumber dari katalog literatur terbuka global. Buku Publik dikhususkan untuk referensi bacaan mandiri dan <strong>tidak memiliki stok fisik ataupun layanan peminjaman kampus</strong>.
               </p>
             </div>
+
+            {/* Aksi Readlist Publik */}
+            {canShowAction && (
+              <div className="space-y-2 pt-1">
+                {detail.inReadlist ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="md"
+                    className="w-full text-sm font-semibold text-[var(--color-danger)] border-[var(--color-danger-border)] hover:bg-[var(--color-danger-surface)]"
+                    isLoading={isActionLoading}
+                    leftIcon={<Trash2 className="h-4 w-4 text-[var(--color-danger)]" />}
+                    onClick={handleRemove}
+                  >
+                    Hapus dari Readlist
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="md"
+                    className="w-full text-sm font-bold shadow-xs"
+                    isLoading={isActionLoading}
+                    leftIcon={<BookmarkPlus className="h-4 w-4" />}
+                    onClick={handleAdd}
+                  >
+                    + Readlist
+                  </Button>
+                )}
+                {actor === 'guest' && !detail.inReadlist && (
+                  <p className="text-center text-[11px] text-[var(--color-ink-muted)]">
+                    Masuk dengan NIM/Email untuk menyimpan buku ke Readlist Saya.
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Subjek / Topik */}
             {detail.subjects && detail.subjects.length > 0 && (
