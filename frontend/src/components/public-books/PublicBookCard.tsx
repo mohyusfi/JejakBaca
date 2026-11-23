@@ -1,4 +1,5 @@
-import { BookOpen } from 'lucide-react';
+import { BookmarkPlus, BookOpen, Trash2 } from 'lucide-react';
+import { useReadlistAction } from '../../hooks/useReadlistAction';
 import { cn } from '../../lib/cn';
 import { formatAuthors } from '../../lib/format';
 import type { PublicBookSummary } from '../../types/domain';
@@ -12,6 +13,17 @@ export interface PublicBookCardProps {
 }
 
 export function PublicBookCard({ book, isSelected, onSelect }: PublicBookCardProps) {
+  const {
+    canShowAction,
+    isLoading,
+    handleAdd,
+    handleRemove,
+  } = useReadlistAction({
+    workId: book.workId,
+    title: book.title,
+    inReadlist: book.inReadlist,
+  });
+
   return (
     <article
       data-testid={`public-book-card-${book.workId}`}
@@ -92,7 +104,12 @@ export function PublicBookCard({ book, isSelected, onSelect }: PublicBookCardPro
         </div>
       )}
 
-      <div className="mt-3.5 pt-1">
+      <div
+        className={cn(
+          'mt-3.5 gap-2 pt-1',
+          canShowAction ? 'grid grid-cols-1 sm:grid-cols-2' : 'flex',
+        )}
+      >
         <Button
           type="button"
           variant="secondary"
@@ -103,6 +120,30 @@ export function PublicBookCard({ book, isSelected, onSelect }: PublicBookCardPro
         >
           {isSelected ? 'Sedang Dilihat' : 'Lihat Detail'}
         </Button>
+
+        {canShowAction && (
+          <Button
+            type="button"
+            variant={book.inReadlist ? 'secondary' : 'primary'}
+            size="sm"
+            className={cn(
+              'w-full text-xs',
+              book.inReadlist &&
+                'text-[var(--color-danger)] border-[var(--color-danger-border)] hover:bg-[var(--color-danger-surface)]',
+            )}
+            isLoading={isLoading}
+            leftIcon={
+              book.inReadlist ? (
+                <Trash2 className="h-3.5 w-3.5 text-[var(--color-danger)]" />
+              ) : (
+                <BookmarkPlus className="h-3.5 w-3.5" />
+              )
+            }
+            onClick={book.inReadlist ? handleRemove : handleAdd}
+          >
+            {book.inReadlist ? 'Hapus dari Readlist' : '+ Readlist'}
+          </Button>
+        )}
       </div>
     </article>
   );
