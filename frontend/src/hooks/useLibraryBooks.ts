@@ -1,6 +1,17 @@
-import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { isApiError } from '../lib/api-error';
 import { bookService, DEFAULT_CATALOG_LIMIT } from '../services/book-service';
+import type {
+  CreateLibraryBookRequest,
+  UpdateLibraryBookRequest,
+} from '../types/domain';
+import { adminKeys } from './useAdminOverview';
 
 export interface CatalogFilterState {
   q: string;
@@ -90,5 +101,55 @@ export function useLibraryBooks(params: AdminLibraryBooksParams) {
     queryKey: libraryBookKeys.paginated(normalizedParams),
     queryFn: ({ signal }) => bookService.list(normalizedParams, signal),
     placeholderData: keepPreviousData,
+  });
+}
+
+/**
+ * Hook mutasi penambahan Buku Perpustakaan baru (POST /api/v1/books)
+ */
+export function useCreateLibraryBook() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateLibraryBookRequest) => bookService.create(payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: libraryBookKeys.all });
+      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      void queryClient.invalidateQueries({ queryKey: ['graphql'] });
+    },
+  });
+}
+
+/**
+ * Hook mutasi pembaruan Buku Perpustakaan (PUT /api/v1/books/{id})
+ */
+export function useUpdateLibraryBook() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: UpdateLibraryBookRequest }) =>
+      bookService.update(id, payload),
+    onSuccess: (data) => {
+      void queryClient.invalidateQueries({ queryKey: libraryBookKeys.all });
+      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      void queryClient.invalidateQueries({ queryKey: ['graphql'] });
+      queryClient.setQueryData(libraryBookKeys.detail(data.id), data);
+    },
+  });
+}
+
+/**
+ * Hook mutasi penghapusan Buku Perpustakaan (DELETE /api/v1/books/{id})
+ */
+export function useDeleteLibraryBook() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (bookId: number) => bookService.delete(bookId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: libraryBookKeys.all });
+      void queryClient.invalidateQueries({ queryKey: adminKeys.all });
+      void queryClient.invalidateQueries({ queryKey: ['graphql'] });
+    },
   });
 }
