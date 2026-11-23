@@ -94,12 +94,16 @@ export function LibraryBookRow({ book, isSelected, onSelect }: LibraryBookRowPro
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t border-[var(--color-border)] bg-[var(--color-surface-subtle)]/70 px-5 py-2.5">
-        <p className="flex flex-wrap items-center gap-x-1.5 text-xs font-medium text-[var(--color-ink-muted)]">
+        <p className="min-w-0 truncate whitespace-nowrap text-xs font-medium text-[var(--color-ink-muted)]">
           {book.category && <span>{book.category}</span>}
-          {book.category && book.publishedYear && <span aria-hidden="true">·</span>}
+          {book.category && book.publishedYear && (
+            <span aria-hidden="true" className="mx-1.5">
+              ·
+            </span>
+          )}
           {book.publishedYear && <span className="tabular-nums">{book.publishedYear}</span>}
         </p>
-        <div className="relative z-20 flex items-center gap-3">
+        <div className="relative z-20 flex shrink-0 items-center gap-2.5 whitespace-nowrap">
           <span className={cn('text-xs tabular-nums', STOCK_TEXT_WEIGHT[stock.health])}>
             {stock.ratioText}
           </span>
@@ -111,11 +115,7 @@ export function LibraryBookRow({ book, isSelected, onSelect }: LibraryBookRowPro
             >
               Kelola
             </Link>
-          ) : isBorrowed ? (
-            <span className="inline-flex items-center rounded-[var(--radius-control)] border border-[var(--color-primary-border)] bg-[var(--color-primary-soft)] px-2.5 py-1 text-xs font-semibold text-[var(--color-primary)]">
-              Sedang Anda Pinjam
-            </span>
-          ) : isOutOfStock ? (
+          ) : isBorrowed ? null : isOutOfStock ? (
             <span className="inline-flex items-center rounded-[var(--radius-control)] border border-[var(--color-border)] bg-[var(--color-surface-subtle)] px-2.5 py-1 text-xs font-semibold text-[var(--color-ink-subtle)]">
               Stok Habis
             </span>

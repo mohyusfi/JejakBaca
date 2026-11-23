@@ -1,4 +1,4 @@
-import { BookmarkPlus, BookOpen, Trash2 } from 'lucide-react';
+import { Bookmark, BookmarkCheck, BookOpen, Loader2 } from 'lucide-react';
 import { useReadlistAction } from '../../hooks/useReadlistAction';
 import { cn } from '../../lib/cn';
 import { formatAuthors } from '../../lib/format';
@@ -16,8 +16,7 @@ export function PublicBookCard({ book, isSelected, onSelect }: PublicBookCardPro
   const {
     canShowAction,
     isLoading,
-    handleAdd,
-    handleRemove,
+    handleToggle,
   } = useReadlistAction({
     workId: book.workId,
     title: book.title,
@@ -34,7 +33,32 @@ export function PublicBookCard({ book, isSelected, onSelect }: PublicBookCardPro
           : 'border-[var(--color-border)] hover:border-[var(--color-border-strong)] hover:shadow-xs',
       )}
     >
-      <div className="flex items-start gap-3.5">
+      {canShowAction && (
+        <button
+          type="button"
+          aria-label={book.inReadlist ? 'Hapus dari Readlist' : 'Tambah ke Readlist'}
+          aria-pressed={book.inReadlist}
+          title={book.inReadlist ? 'Hapus dari Readlist (klik lagi)' : 'Tambah ke Readlist'}
+          disabled={isLoading}
+          onClick={handleToggle}
+          className={cn(
+            'absolute top-3 right-3 z-10 inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius-control)] border transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-60',
+            book.inReadlist
+              ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]'
+              : 'border-[var(--color-border)] bg-[var(--color-surface-subtle)] text-[var(--color-ink-muted)] hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-soft)] hover:text-[var(--color-primary)]',
+          )}
+        >
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          ) : book.inReadlist ? (
+            <BookmarkCheck className="h-4 w-4" aria-hidden="true" />
+          ) : (
+            <Bookmark className="h-4 w-4" aria-hidden="true" />
+          )}
+        </button>
+      )}
+
+      <div className={cn('flex items-start gap-3.5', canShowAction && 'pr-9')}>
         <BookCover
           src={book.coverUrl}
           title={book.title}
@@ -104,12 +128,7 @@ export function PublicBookCard({ book, isSelected, onSelect }: PublicBookCardPro
         </div>
       )}
 
-      <div
-        className={cn(
-          'mt-3.5 gap-2 pt-1',
-          canShowAction ? 'grid grid-cols-1 sm:grid-cols-2' : 'flex',
-        )}
-      >
+      <div className="mt-3.5 flex pt-1">
         <Button
           type="button"
           variant="secondary"
@@ -120,30 +139,6 @@ export function PublicBookCard({ book, isSelected, onSelect }: PublicBookCardPro
         >
           {isSelected ? 'Sedang Dilihat' : 'Lihat Detail'}
         </Button>
-
-        {canShowAction && (
-          <Button
-            type="button"
-            variant={book.inReadlist ? 'secondary' : 'primary'}
-            size="sm"
-            className={cn(
-              'w-full text-xs',
-              book.inReadlist &&
-                'text-[var(--color-danger)] border-[var(--color-danger-border)] hover:bg-[var(--color-danger-surface)]',
-            )}
-            isLoading={isLoading}
-            leftIcon={
-              book.inReadlist ? (
-                <Trash2 className="h-3.5 w-3.5 text-[var(--color-danger)]" />
-              ) : (
-                <BookmarkPlus className="h-3.5 w-3.5" />
-              )
-            }
-            onClick={book.inReadlist ? handleRemove : handleAdd}
-          >
-            {book.inReadlist ? 'Hapus dari Readlist' : '+ Readlist'}
-          </Button>
-        )}
       </div>
     </article>
   );

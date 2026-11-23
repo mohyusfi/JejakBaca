@@ -48,7 +48,7 @@ describe('Aksi Tambah/Hapus Readlist di Jelajah Buku Publik & Intent Pasca-Login
       const card = await screen.findByTestId('public-book-card-OL17860744W');
       expect(card).toBeInTheDocument();
 
-      const addBtn = within(card).getByRole('button', { name: /\+ Readlist/i });
+      const addBtn = within(card).getByRole('button', { name: /Tambah ke Readlist/i });
       expect(addBtn).toBeInTheDocument();
 
       await user.click(addBtn);
@@ -143,7 +143,7 @@ describe('Aksi Tambah/Hapus Readlist di Jelajah Buku Publik & Intent Pasca-Login
       // Belum ada badge Di Readlist
       expect(within(card).queryByText('Di Readlist')).not.toBeInTheDocument();
 
-      const addBtn = within(card).getByRole('button', { name: /\+ Readlist/i });
+      const addBtn = within(card).getByRole('button', { name: /Tambah ke Readlist/i });
       await user.click(addBtn);
 
       // Toast sukses muncul
@@ -182,7 +182,7 @@ describe('Aksi Tambah/Hapus Readlist di Jelajah Buku Publik & Intent Pasca-Login
 
       // Tombol kembali menjadi "+ Readlist"
       expect(
-        await within(card).findByRole('button', { name: /\+ Readlist/i }),
+        await within(card).findByRole('button', { name: /Tambah ke Readlist/i }),
       ).toBeInTheDocument();
 
       // Badge Di Readlist hilang
@@ -237,7 +237,7 @@ describe('Aksi Tambah/Hapus Readlist di Jelajah Buku Publik & Intent Pasca-Login
       renderAppAt('/public-books');
 
       const card = await screen.findByTestId('public-book-card-OL17860744W');
-      const addBtn = within(card).getByRole('button', { name: /\+ Readlist/i });
+      const addBtn = within(card).getByRole('button', { name: /Tambah ke Readlist/i });
 
       await user.click(addBtn);
 
@@ -267,7 +267,7 @@ describe('Aksi Tambah/Hapus Readlist di Jelajah Buku Publik & Intent Pasca-Login
       renderAppAt('/public-books');
 
       const card = await screen.findByTestId('public-book-card-OL17860744W');
-      const addBtn = within(card).getByRole('button', { name: /\+ Readlist/i });
+      const addBtn = within(card).getByRole('button', { name: /Tambah ke Readlist/i });
 
       await user.click(addBtn);
 
@@ -293,7 +293,7 @@ describe('Aksi Tambah/Hapus Readlist di Jelajah Buku Publik & Intent Pasca-Login
       expect(card).toBeInTheDocument();
 
       expect(
-        within(card).queryByRole('button', { name: /\+ Readlist/i }),
+        within(card).queryByRole('button', { name: /Tambah ke Readlist/i }),
       ).not.toBeInTheDocument();
       expect(
         within(card).queryByRole('button', { name: /Hapus dari Readlist/i }),

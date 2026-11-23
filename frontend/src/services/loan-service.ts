@@ -63,7 +63,7 @@ export const loanService = {
   ): Promise<ApiPaginatedResponse<AdminLoanItem>> {
     return apiClient.get<ApiPaginatedResponse<AdminLoanItem>>('/api/v1/admin/loans', {
       query: {
-        status: params?.status && params.status !== 'all' ? params.status : undefined,
+        status: params?.status ?? 'borrowed',
         page: params?.page ?? 1,
         limit: params?.limit ?? 10,
         q: params?.q?.trim() || undefined,
