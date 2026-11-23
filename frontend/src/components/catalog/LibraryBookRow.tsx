@@ -1,8 +1,10 @@
-import { ChevronRight } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
+import { useBorrowAction } from '../../hooks/useBorrowAction';
 import { cn } from '../../lib/cn';
 import { getStockSummary, type StockHealth } from '../../lib/format';
 import type { LibraryBook } from '../../types/domain';
 import { BookCover } from '../ui/BookCover';
+import { Button } from '../ui/Button';
 
 export interface LibraryBookRowProps {
   book: LibraryBook;
@@ -26,6 +28,7 @@ const STOCK_TEXT_WEIGHT: Record<StockHealth, string> = {
 export function LibraryBookRow({ book, isSelected, onSelect }: LibraryBookRowProps) {
   const stock = getStockSummary(book.stockAvailable, book.stockTotal);
   const shortDescription = (book.description ?? '').trim();
+  const { actor, handleBorrow, isLoading, isBorrowed, isOutOfStock } = useBorrowAction(book);
 
   return (
     <article
@@ -40,10 +43,12 @@ export function LibraryBookRow({ book, isSelected, onSelect }: LibraryBookRowPro
       <span
         className={cn(
           'pointer-events-none absolute top-3 -right-8 z-10 hidden w-28 rotate-45 border py-0.5 text-center text-[10px] font-bold tracking-wider uppercase shadow-xs md:block',
-          STOCK_BADGE_CLASS[stock.health],
+          isBorrowed
+            ? 'border-[var(--color-primary-border)] bg-[var(--color-primary)] font-semibold text-white'
+            : STOCK_BADGE_CLASS[stock.health],
         )}
       >
-        {stock.label}
+        {isBorrowed ? 'Dipinjam' : stock.label}
       </span>
 
       <div className="flex flex-1 items-start justify-between gap-4 px-5 py-4 md:flex-col md:items-stretch">
@@ -79,10 +84,12 @@ export function LibraryBookRow({ book, isSelected, onSelect }: LibraryBookRowPro
         <span
           className={cn(
             'inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-xs whitespace-nowrap md:hidden',
-            STOCK_BADGE_CLASS[stock.health],
+            isBorrowed
+              ? 'border-[var(--color-primary-border)] bg-[var(--color-primary)] font-semibold text-white'
+              : STOCK_BADGE_CLASS[stock.health],
           )}
         >
-          {stock.label}
+          {isBorrowed ? 'Dipinjam' : stock.label}
         </span>
       </div>
 
@@ -92,22 +99,37 @@ export function LibraryBookRow({ book, isSelected, onSelect }: LibraryBookRowPro
           {book.category && book.publishedYear && <span aria-hidden="true">·</span>}
           {book.publishedYear && <span className="tabular-nums">{book.publishedYear}</span>}
         </p>
-        <div className="flex items-center gap-4">
+        <div className="relative z-20 flex items-center gap-3">
           <span className={cn('text-xs tabular-nums', STOCK_TEXT_WEIGHT[stock.health])}>
             {stock.ratioText}
           </span>
-          <span
-            aria-hidden="true"
-            className={cn(
-              'inline-flex shrink-0 items-center gap-0.5 text-xs transition-colors duration-150 md:hidden',
-              isSelected
-                ? 'font-bold text-[var(--color-primary)]'
-                : 'font-semibold text-[var(--color-primary)] group-hover:text-[var(--color-primary-hover)]',
-            )}
-          >
-            <span>{isSelected ? 'Terpilih' : 'Detail'}</span>
-            <ChevronRight className="h-3.5 w-3.5" />
-          </span>
+          {actor === 'admin' ? (
+            <Link
+              to="/admin/books"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex min-h-[30px] items-center rounded-[var(--radius-control)] border border-[var(--color-border)] bg-white px-2.5 py-1 text-xs font-semibold text-[var(--color-ink)] hover:bg-[var(--color-surface-subtle)]"
+            >
+              Kelola
+            </Link>
+          ) : isBorrowed ? (
+            <span className="inline-flex items-center rounded-[var(--radius-control)] border border-[var(--color-primary-border)] bg-[var(--color-primary-soft)] px-2.5 py-1 text-xs font-semibold text-[var(--color-primary)]">
+              Sedang Anda Pinjam
+            </span>
+          ) : isOutOfStock ? (
+            <span className="inline-flex items-center rounded-[var(--radius-control)] border border-[var(--color-border)] bg-[var(--color-surface-subtle)] px-2.5 py-1 text-xs font-semibold text-[var(--color-ink-subtle)]">
+              Stok Habis
+            </span>
+          ) : (
+            <Button
+              variant="circulation"
+              size="sm"
+              isLoading={isLoading}
+              onClick={handleBorrow}
+              className="min-h-[30px] px-3 py-1 text-xs"
+            >
+              Pinjam
+            </Button>
+          )}
         </div>
       </div>
     </article>
