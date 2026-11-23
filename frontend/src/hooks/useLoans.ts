@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { libraryBookKeys } from './useLibraryBooks';
 import { loanService, type AdminLoansQueryParams, type MyLoansQueryParams } from '../services/loan-service';
+import { graphqlRequest } from '../lib/graphql-client';
+import type { UserOverview } from '../types/domain';
 
 export const loanKeys = {
   all: ['loans'] as const,
@@ -9,6 +11,32 @@ export const loanKeys = {
   adminLists: () => [...loanKeys.all, 'admin'] as const,
   adminList: (params?: AdminLoansQueryParams) => [...loanKeys.adminLists(), params ?? {}] as const,
 };
+
+export const MY_OVERVIEW_GQL = `
+  query MyOverview {
+    myOverview {
+      activeLoansCount
+      overdueLoansCount
+      readlistCount
+    }
+  }
+`;
+
+/**
+ * Hook ringkasan kuota peminjaman pengguna via endpoint agregator GraphQL (POST /graphql)
+ */
+export function useMyOverview() {
+  return useQuery({
+    queryKey: ['graphql', 'myOverview'],
+    queryFn: async ({ signal }) => {
+      const data = await graphqlRequest<{ myOverview: UserOverview }>({
+        query: MY_OVERVIEW_GQL,
+        signal,
+      });
+      return data.myOverview;
+    },
+  });
+}
 
 /**
  * Hook mutasi peminjaman mandiri Buku Perpustakaan (POST /api/v1/loans)
