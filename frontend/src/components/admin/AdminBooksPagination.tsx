@@ -4,7 +4,6 @@ import { Button } from '../ui/Button';
 interface AdminBooksPaginationProps {
   page: number;
   totalPages: number;
-  totalItems: number;
   onPageChange: (nextPage: number) => void;
   isFetching?: boolean;
 }
@@ -12,7 +11,6 @@ interface AdminBooksPaginationProps {
 export function AdminBooksPagination({
   page,
   totalPages,
-  totalItems,
   onPageChange,
   isFetching = false,
 }: AdminBooksPaginationProps) {
@@ -31,12 +29,7 @@ export function AdminBooksPagination({
         dari{' '}
         <span className="font-mono font-semibold tabular-nums text-[var(--color-ink)]">
           {safeTotalPages}
-        </span>{' '}
-        (total{' '}
-        <span className="font-mono font-semibold tabular-nums text-[var(--color-ink)]">
-          {totalItems}
-        </span>{' '}
-        judul)
+        </span>
       </p>
 
       <div className="flex items-center gap-2">

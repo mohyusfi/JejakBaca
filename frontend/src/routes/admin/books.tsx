@@ -152,7 +152,6 @@ function AdminBooksPage() {
           <AdminBooksPagination
             page={meta.page}
             totalPages={meta.totalPages}
-            totalItems={meta.total}
             isFetching={isFetching}
             onPageChange={(nextPage) => updateSearch({ page: nextPage }, false)}
           />
