@@ -1,0 +1,43 @@
+meta {
+  name: Create Library Book
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/books
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "title": "Basis Data Lanjut",
+    "author": "Abraham Silberschatz",
+    "isbn": "978-007-8022-15-9",
+    "category": "Sistem Informasi",
+    "publishedYear": 2020,
+    "stockTotal": 3,
+    "description": "Pembahasan konsep perancangan basis data relasional, normalisasi, dan transaksi.",
+    "coverUrl": "https://covers.openlibrary.org/b/id/123456-M.jpg"
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (body && body.data && body.data.id) {
+    bru.setEnvVar("bookId", String(body.data.id));
+  }
+}
+
+tests {
+  test("Status code is 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Book created successfully", function() {
+    const body = res.getBody();
+    expect(body.success).to.equal(true);
+    expect(body.data.id).to.be.a("number");
+  });
+}

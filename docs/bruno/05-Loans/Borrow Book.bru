@@ -1,0 +1,40 @@
+meta {
+  name: Borrow Book
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/loans
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{userToken}}
+}
+
+body:json {
+  {
+    "bookId": {{bookId}}
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (body && body.data && body.data.id) {
+    bru.setEnvVar("loanId", String(body.data.id));
+  }
+}
+
+tests {
+  test("Status code is 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Loan created successfully", function() {
+    const body = res.getBody();
+    expect(body.success).to.equal(true);
+    expect(body.data.id).to.be.a("number");
+  });
+}

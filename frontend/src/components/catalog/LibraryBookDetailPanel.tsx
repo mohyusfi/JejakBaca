@@ -1,9 +1,12 @@
 import { useEffect } from 'react';
+import { Link } from '@tanstack/react-router';
 import { AlertCircle, BookOpen, RefreshCw, X } from 'lucide-react';
+import { useBorrowAction } from '../../hooks/useBorrowAction';
 import { useLibraryBookDetail } from '../../hooks/useLibraryBooks';
 import { isApiError } from '../../lib/api-error';
 import { cn } from '../../lib/cn';
 import { getStockSummary, type StockHealth } from '../../lib/format';
+import type { LibraryBook } from '../../types/domain';
 import { BookCover } from '../ui/BookCover';
 import { Button } from '../ui/Button';
 import { Skeleton } from '../ui/Skeleton';
@@ -25,6 +28,87 @@ const STOCK_RATIO_WEIGHT: Record<StockHealth, string> = {
   low: 'font-semibold text-[var(--color-status-low-ink)]',
   empty: 'font-bold text-[var(--color-status-critical-ink)]',
 };
+
+function DetailCirculationAction({ book }: { book: LibraryBook }) {
+  const { actor, handleBorrow, isLoading, isBorrowed, isOutOfStock } = useBorrowAction(book);
+
+  if (actor === 'admin') {
+    return (
+      <div className="rounded-[var(--radius-control)] border border-[var(--color-primary-border)] bg-[var(--color-primary-soft)]/40 p-3.5">
+        <p className="text-xs text-[var(--color-ink)]">
+          Anda masuk sebagai <strong>Admin</strong>. Pengelolaan koleksi buku dilakukan di Workspace Admin.
+        </p>
+        <Link
+          to="/admin/books"
+          className="mt-2.5 inline-flex min-h-[38px] w-full items-center justify-center rounded-[var(--radius-control)] bg-[var(--color-primary)] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[var(--color-primary-hover)]"
+        >
+          Kelola Buku di Workspace Admin
+        </Link>
+      </div>
+    );
+  }
+
+  if (isBorrowed) {
+    return (
+      <div className="rounded-[var(--radius-control)] border border-[var(--color-primary-border)] bg-[var(--color-primary-soft)]/50 p-3.5 text-center">
+        <p className="text-xs font-semibold text-[var(--color-primary)]">
+          Sedang Anda Pinjam
+        </p>
+        <p className="mt-1 text-[11px] text-[var(--color-ink-muted)]">
+          Buku ini sedang dalam masa peminjaman aktif Anda. Cek sisa hari di halaman Peminjaman Saya.
+        </p>
+        <Button
+          variant="secondary"
+          size="md"
+          disabled
+          className="mt-3 w-full"
+        >
+          Sedang Anda Pinjam
+        </Button>
+      </div>
+    );
+  }
+
+  if (isOutOfStock) {
+    return (
+      <div className="rounded-[var(--radius-control)] border border-[var(--color-border)] bg-[var(--color-surface-subtle)] p-3.5 text-center">
+        <p className="text-xs font-semibold text-[var(--color-danger)]">
+          Stok Habis
+        </p>
+        <p className="mt-1 text-[11px] text-[var(--color-ink-muted)]">
+          Seluruh eksemplar buku ini sedang dipinjam oleh mahasiswa lain.
+        </p>
+        <Button
+          variant="circulation"
+          size="md"
+          disabled
+          className="mt-3 w-full"
+        >
+          Stok Habis
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <Button
+        variant="circulation"
+        size="lg"
+        className="w-full text-sm font-bold shadow-xs sm:text-base"
+        isLoading={isLoading}
+        onClick={handleBorrow}
+      >
+        Pinjam Buku Sekarang
+      </Button>
+      <p className="text-center text-[11px] text-[var(--color-ink-muted)]">
+        {actor === 'guest'
+          ? 'Masuk dengan NIM/Email untuk meminjam mandiri (jatuh tempo 7 hari).'
+          : 'Peminjaman mandiri berdurasi 7 hari. Maksimal 3 buku aktif.'}
+      </p>
+    </div>
+  );
+}
 
 export function LibraryBookDetailPanel({ bookId, onClose }: LibraryBookDetailPanelProps) {
   const { data: book, isLoading, isError, error, refetch } = useLibraryBookDetail(bookId);
@@ -205,6 +289,9 @@ export function LibraryBookDetailPanel({ bookId, onClose }: LibraryBookDetailPan
                   </p>
                 </div>
               </dl>
+
+              {/* Aksi Sirkulasi Peminjaman */}
+              <DetailCirculationAction book={book} />
 
               <div>
                 <h3 className="flex items-center gap-1.5 text-xs font-semibold tracking-wider text-[var(--color-ink-muted)] uppercase">

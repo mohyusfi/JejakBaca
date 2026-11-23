@@ -23,7 +23,6 @@ export function migrateDatabase(db) {
       created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
       updated_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
     );
-
     CREATE TABLE IF NOT EXISTS books (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
@@ -40,6 +39,9 @@ export function migrateDatabase(db) {
       updated_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
     );
 
+    CREATE INDEX IF NOT EXISTS idx_books_deleted_at ON books(deleted_at);
+    CREATE INDEX IF NOT EXISTS idx_books_category ON books(category);
+    CREATE INDEX IF NOT EXISTS idx_books_isbn ON books(isbn);
     CREATE TABLE IF NOT EXISTS loans (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id INTEGER NOT NULL,
@@ -56,6 +58,23 @@ export function migrateDatabase(db) {
 
     CREATE INDEX IF NOT EXISTS idx_loans_user_status ON loans(user_id, status);
     CREATE INDEX IF NOT EXISTS idx_loans_book_status ON loans(book_id, status);
+
+    CREATE TABLE IF NOT EXISTS readlist_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      work_id TEXT NOT NULL,
+      title TEXT NOT NULL DEFAULT '',
+      authors TEXT NOT NULL DEFAULT '[]',
+      first_publish_year INTEGER,
+      cover_url TEXT,
+      description TEXT,
+      created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      UNIQUE(user_id, work_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_readlist_items_user_id ON readlist_items(user_id);
+    CREATE INDEX IF NOT EXISTS idx_readlist_items_user_work ON readlist_items(user_id, work_id);
   `);
 }
 

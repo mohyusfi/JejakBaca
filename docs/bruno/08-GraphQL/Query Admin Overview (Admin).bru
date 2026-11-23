@@ -1,0 +1,52 @@
+meta {
+  name: Query Admin Overview (Admin)
+  type: graphql
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: graphql
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+body:graphql {
+  query AdminOverview($loanStatus: LoanStatusFilter) {
+    adminOverview(loanStatus: $loanStatus) {
+      totalBooks
+      lowStockBooksCount
+      activeLoansCount
+      overdueLoansCount
+      recentLoans {
+        id
+        bookId
+        bookTitle
+        status
+        dueDate
+        isOverdue
+      }
+    }
+  }
+}
+
+body:graphql:vars {
+  {
+    "loanStatus": "BORROWED"
+  }
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("No GraphQL errors", function() {
+    const body = res.getBody();
+    expect(body.errors).to.be.undefined;
+    expect(body.data.adminOverview).to.be.an("object");
+  });
+}

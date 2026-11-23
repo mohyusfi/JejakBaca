@@ -203,23 +203,41 @@ export const bookService = {
    * @returns {object}
    */
   createBook(payload = {}) {
+    const data = payload && typeof payload === 'object' ? payload : {};
     const details = [];
 
-    if (!payload.title || typeof payload.title !== 'string' || !payload.title.trim()) {
+    if (!data.title || typeof data.title !== 'string' || !data.title.trim()) {
       details.push({ field: 'title', message: 'Judul buku wajib diisi' });
     }
 
-    if (!payload.author || typeof payload.author !== 'string' || !payload.author.trim()) {
+    if (!data.author || typeof data.author !== 'string' || !data.author.trim()) {
       details.push({ field: 'author', message: 'Penulis buku wajib diisi' });
     }
 
-    if (!payload.description || typeof payload.description !== 'string' || !payload.description.trim()) {
+    if (!data.description || typeof data.description !== 'string' || !data.description.trim()) {
       details.push({ field: 'description', message: 'Deskripsi buku wajib diisi' });
     }
 
-    const stockTotal = Number(payload.stockTotal);
-    if (Number.isNaN(stockTotal) || stockTotal < 1) {
+    const stockTotal = Number(data.stockTotal);
+    if (
+      data.stockTotal === undefined ||
+      data.stockTotal === null ||
+      typeof data.stockTotal === 'boolean' ||
+      Number.isNaN(stockTotal) ||
+      !Number.isInteger(stockTotal) ||
+      stockTotal < 1
+    ) {
       details.push({ field: 'stockTotal', message: 'Stok total minimal bernilai 1' });
+    }
+
+    let publishedYear = null;
+    if (data.publishedYear !== undefined && data.publishedYear !== null && data.publishedYear !== '') {
+      const year = Number(data.publishedYear);
+      if (Number.isNaN(year) || !Number.isInteger(year) || year < 0) {
+        details.push({ field: 'publishedYear', message: 'Tahun terbit harus berupa angka integer positif' });
+      } else {
+        publishedYear = year;
+      }
     }
 
     if (details.length > 0) {
@@ -235,15 +253,15 @@ export const bookService = {
     `);
 
     const result = stmt.run(
-      payload.title.trim(),
-      payload.author.trim(),
-      payload.isbn ? payload.isbn.trim() : null,
-      payload.category ? payload.category.trim() : null,
-      payload.publishedYear ? Number(payload.publishedYear) : null,
+      data.title.trim(),
+      data.author.trim(),
+      data.isbn ? data.isbn.trim() : null,
+      data.category ? data.category.trim() : null,
+      publishedYear,
       stockTotal,
       stockTotal, // stockAvailable = stockTotal
-      payload.description.trim(),
-      payload.coverUrl ? payload.coverUrl.trim() : null
+      data.description.trim(),
+      data.coverUrl ? data.coverUrl.trim() : null
     );
 
     const insertedId = Number(result.lastInsertRowid);
@@ -269,30 +287,44 @@ export const bookService = {
       throw new NotFoundError('Buku tidak ditemukan');
     }
 
+    const data = payload && typeof payload === 'object' ? payload : {};
     const details = [];
-    if (payload.title !== undefined && (typeof payload.title !== 'string' || !payload.title.trim())) {
+
+    if (data.title !== undefined && (typeof data.title !== 'string' || !data.title.trim())) {
       details.push({ field: 'title', message: 'Judul buku tidak boleh kosong' });
     }
-    if (payload.author !== undefined && (typeof payload.author !== 'string' || !payload.author.trim())) {
+    if (data.author !== undefined && (typeof data.author !== 'string' || !data.author.trim())) {
       details.push({ field: 'author', message: 'Penulis buku tidak boleh kosong' });
     }
-    if (payload.description !== undefined && (typeof payload.description !== 'string' || !payload.description.trim())) {
+    if (data.description !== undefined && (typeof data.description !== 'string' || !data.description.trim())) {
       details.push({ field: 'description', message: 'Deskripsi buku tidak boleh kosong' });
     }
 
     let newStockTotal = current.stock_total;
     let newStockAvailable = current.stock_available;
 
-    if (payload.stockTotal !== undefined) {
-      const parsedStock = Number(payload.stockTotal);
-      if (Number.isNaN(parsedStock) || parsedStock < 0) {
+    if (data.stockTotal !== undefined) {
+      const parsedStock = Number(data.stockTotal);
+      if (
+        data.stockTotal === null ||
+        typeof data.stockTotal === 'boolean' ||
+        Number.isNaN(parsedStock) ||
+        !Number.isInteger(parsedStock) ||
+        parsedStock < 0
+      ) {
         details.push({ field: 'stockTotal', message: 'Stok total tidak boleh negatif' });
       } else {
         newStockTotal = parsedStock;
-        const activeLoanRow = db
-          .prepare("SELECT COUNT(*) AS total FROM loans WHERE book_id = ? AND status = 'borrowed';")
-          .get(bookId);
-        const currentlyBorrowed = activeLoanRow ? Number(activeLoanRow.total) : 0;
+        let currentlyBorrowed = 0;
+        try {
+          const activeLoanRow = db
+            .prepare("SELECT COUNT(*) AS total FROM loans WHERE book_id = ? AND status = 'borrowed';")
+            .get(bookId);
+          currentlyBorrowed = activeLoanRow ? Number(activeLoanRow.total) : 0;
+        } catch {
+          // Tabel loans mungkin belum dibuat
+        }
+
         if (newStockTotal < currentlyBorrowed) {
           throw new ConflictError(
             `Stok total (${newStockTotal}) tidak boleh kurang dari buku yang sedang dipinjam (${currentlyBorrowed})`,
@@ -303,17 +335,30 @@ export const bookService = {
       }
     }
 
+    let publishedYear = current.published_year;
+    if (data.publishedYear !== undefined) {
+      if (data.publishedYear === null || data.publishedYear === '') {
+        publishedYear = null;
+      } else {
+        const year = Number(data.publishedYear);
+        if (Number.isNaN(year) || !Number.isInteger(year) || year < 0) {
+          details.push({ field: 'publishedYear', message: 'Tahun terbit harus berupa angka integer positif' });
+        } else {
+          publishedYear = year;
+        }
+      }
+    }
+
     if (details.length > 0) {
       throw new ValidationError('Validasi pembaruan buku gagal', details);
     }
 
-    const title = payload.title !== undefined ? payload.title.trim() : current.title;
-    const author = payload.author !== undefined ? payload.author.trim() : current.author;
-    const description = payload.description !== undefined ? payload.description.trim() : current.description;
-    const isbn = payload.isbn !== undefined ? (payload.isbn ? payload.isbn.trim() : null) : current.isbn;
-    const category = payload.category !== undefined ? (payload.category ? payload.category.trim() : null) : current.category;
-    const publishedYear = payload.publishedYear !== undefined ? (payload.publishedYear ? Number(payload.publishedYear) : null) : current.published_year;
-    const coverUrl = payload.coverUrl !== undefined ? (payload.coverUrl ? payload.coverUrl.trim() : null) : current.cover_url;
+    const title = data.title !== undefined ? data.title.trim() : current.title;
+    const author = data.author !== undefined ? data.author.trim() : current.author;
+    const description = data.description !== undefined ? data.description.trim() : current.description;
+    const isbn = data.isbn !== undefined ? (data.isbn ? data.isbn.trim() : null) : current.isbn;
+    const category = data.category !== undefined ? (data.category ? data.category.trim() : null) : current.category;
+    const coverUrl = data.coverUrl !== undefined ? (data.coverUrl ? data.coverUrl.trim() : null) : current.cover_url;
 
     const updateStmt = db.prepare(`
       UPDATE books
@@ -350,14 +395,18 @@ export const bookService = {
       throw new NotFoundError('Buku tidak ditemukan');
     }
 
-    const activeLoanRow = db
-      .prepare("SELECT COUNT(*) AS total FROM loans WHERE book_id = ? AND status = 'borrowed';")
-      .get(bookId);
-    if (activeLoanRow && Number(activeLoanRow.total) > 0) {
-      throw new ConflictError(
-        'Buku tidak dapat dihapus karena masih memiliki peminjaman aktif',
-        'BOOK_IN_ACTIVE_LOAN'
-      );
+    try {
+      const activeLoanRow = db
+        .prepare("SELECT COUNT(*) AS total FROM loans WHERE book_id = ? AND status = 'borrowed';")
+        .get(bookId);
+      if (activeLoanRow && Number(activeLoanRow.total) > 0) {
+        throw new ConflictError(
+          'Buku tidak dapat dihapus karena masih memiliki peminjaman aktif',
+          'BOOK_IN_ACTIVE_LOAN'
+        );
+      }
+    } catch (err) {
+      if (err instanceof ConflictError) throw err;
     }
 
     const deleteStmt = db.prepare(`
@@ -379,7 +428,7 @@ export const bookService = {
     const db = dbInstance || getDb();
     let seededCount = 0;
 
-    const checkStmt = db.prepare('SELECT id FROM books WHERE isbn = ? LIMIT 1;');
+    const checkStmt = db.prepare('SELECT id FROM books WHERE (isbn IS NOT NULL AND isbn = ?) OR (title = ? AND author = ?) LIMIT 1;');
     const insertStmt = db.prepare(`
       INSERT INTO books (
         title, author, isbn, category, published_year,
@@ -388,7 +437,7 @@ export const bookService = {
     `);
 
     for (const book of sampleBooks) {
-      const existing = checkStmt.get(book.isbn);
+      const existing = checkStmt.get(book.isbn, book.title, book.author);
       if (!existing) {
         insertStmt.run(
           book.title,
