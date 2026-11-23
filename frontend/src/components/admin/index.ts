@@ -1,3 +1,4 @@
+export { AdminBookDrawer } from './AdminBookDrawer';
 export { AdminBooksEmptyState } from './AdminBooksEmptyState';
 export { AdminBooksFilterBar } from './AdminBooksFilterBar';
 export { AdminBooksPagination } from './AdminBooksPagination';

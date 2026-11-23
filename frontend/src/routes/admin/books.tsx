@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { RefreshCw } from 'lucide-react';
+import { Plus, RefreshCw } from 'lucide-react';
 import {
+  AdminBookDrawer,
   AdminBooksEmptyState,
   AdminBooksFilterBar,
   AdminBooksPagination,
@@ -8,8 +10,12 @@ import {
   AdminBooksTable,
 } from '../../components/admin';
 import { Button } from '../../components/ui/Button';
-import { useLibraryBooks } from '../../hooks/useLibraryBooks';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
+import { useDeleteLibraryBook, useLibraryBooks } from '../../hooks/useLibraryBooks';
+import { useToast } from '../../hooks/useToast';
+import { isApiError } from '../../lib/api-error';
 import { DEFAULT_CATALOG_LIMIT } from '../../services/book-service';
+import type { LibraryBook } from '../../types/domain';
 
 interface AdminBooksSearch {
   q?: string;
@@ -60,6 +66,79 @@ function AdminBooksPage() {
 
   const hasActiveFilters = Boolean(q.trim() || category.trim() || availableOnly);
 
+  const { showToast } = useToast();
+  const deleteMutation = useDeleteLibraryBook();
+
+  const [drawerState, setDrawerState] = useState<{
+    open: boolean;
+    mode: 'create' | 'edit';
+    initialData: LibraryBook | null;
+  }>({
+    open: false,
+    mode: 'create',
+    initialData: null,
+  });
+
+  const [deletingBook, setDeletingBook] = useState<LibraryBook | null>(null);
+
+  const handleOpenCreateDrawer = () => {
+    setDrawerState({
+      open: true,
+      mode: 'create',
+      initialData: null,
+    });
+  };
+
+  const handleOpenEditDrawer = (book: LibraryBook) => {
+    setDrawerState({
+      open: true,
+      mode: 'edit',
+      initialData: book,
+    });
+  };
+
+  const handleCloseDrawer = () => {
+    setDrawerState((prev) => ({ ...prev, open: false }));
+  };
+
+  const handleDeleteBook = (book: LibraryBook) => {
+    setDeletingBook(book);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deletingBook) return;
+
+    deleteMutation.mutate(deletingBook.id, {
+      onSuccess: () => {
+        showToast({
+          tone: 'success',
+          title: 'Buku Berhasil Dihapus',
+          description: `Buku "${deletingBook.title}" berhasil dihapus dari katalog perpustakaan.`,
+        });
+        setDeletingBook(null);
+      },
+      onError: (err) => {
+        let message = 'Gagal menghapus buku perpustakaan.';
+        if (isApiError(err)) {
+          if (err.code === 'BOOK_IN_ACTIVE_LOAN') {
+            message = 'Buku sedang dipinjam oleh mahasiswa dan tidak dapat dihapus.';
+          } else {
+            message = err.message || message;
+          }
+        } else if (err instanceof Error) {
+          message = err.message;
+        }
+
+        showToast({
+          tone: 'error',
+          title: 'Gagal Menghapus Buku',
+          description: message,
+        });
+        setDeletingBook(null);
+      },
+    });
+  };
+
   const { data, isLoading, isError, isFetching, refetch } = useLibraryBooks({
     q,
     category,
@@ -109,13 +188,22 @@ function AdminBooksPage() {
 
   return (
     <section aria-label="Daftar Koleksi Buku Perpustakaan" className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-[var(--color-ink)]">Daftar Koleksi Buku</h2>
           <p className="text-xs text-[var(--color-ink-muted)]">
             Pantau ketersediaan stok, kategori, dan detail bibliografi seluruh koleksi perpustakaan.
           </p>
         </div>
+        <Button
+          type="button"
+          variant="primary"
+          size="sm"
+          onClick={handleOpenCreateDrawer}
+        >
+          <Plus className="h-4 w-4" aria-hidden="true" />
+          <span>Tambah Buku</span>
+        </Button>
       </div>
 
       <AdminBooksFilterBar
@@ -148,7 +236,11 @@ function AdminBooksPage() {
         <AdminBooksEmptyState hasActiveFilters={hasActiveFilters} onResetFilters={resetFilters} />
       ) : (
         <>
-          <AdminBooksTable books={books} />
+          <AdminBooksTable
+            books={books}
+            onEdit={handleOpenEditDrawer}
+            onDelete={handleDeleteBook}
+          />
           <AdminBooksPagination
             page={meta.page}
             totalPages={meta.totalPages}
@@ -157,6 +249,37 @@ function AdminBooksPage() {
           />
         </>
       )}
+
+      {/* Drawer Tambah / Edit Buku */}
+      <AdminBookDrawer
+        open={drawerState.open}
+        mode={drawerState.mode}
+        initialData={drawerState.initialData}
+        onClose={handleCloseDrawer}
+      />
+
+      {/* Dialog Konfirmasi Hapus Buku */}
+      <ConfirmDialog
+        open={Boolean(deletingBook)}
+        onClose={() => setDeletingBook(null)}
+        onConfirm={handleConfirmDelete}
+        title="Hapus Buku Perpustakaan"
+        description={
+          deletingBook ? (
+            <p>
+              Apakah Anda yakin ingin menghapus buku{' '}
+              <strong className="text-[var(--color-ink)]">"{deletingBook.title}"</strong> dari katalog perpustakaan?
+              Tindakan ini tidak dapat dibatalkan.
+            </p>
+          ) : (
+            ''
+          )
+        }
+        confirmLabel="Hapus Buku"
+        confirmTone="circulation"
+        cancelLabel="Batal"
+        isLoading={deleteMutation.isPending}
+      />
     </section>
   );
 }
