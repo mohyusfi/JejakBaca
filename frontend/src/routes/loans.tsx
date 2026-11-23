@@ -173,11 +173,6 @@ function MyLoansPage() {
                   `${overview?.overdueLoansCount ?? 0} buku`
                 )}
               </span>
-              {!overviewQuery.isLoading && (overview?.overdueLoansCount ?? 0) > 0 && (
-                <span className="inline-flex items-center rounded-full bg-[var(--color-danger)] px-2 py-0.5 text-[10px] font-bold text-white uppercase">
-                  Perhatian
-                </span>
-              )}
             </div>
             <p className="mt-1 text-[11px] text-[var(--color-ink-subtle)]">
               {(overview?.overdueLoansCount ?? 0) > 0

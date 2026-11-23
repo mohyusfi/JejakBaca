@@ -66,7 +66,6 @@ describe('Peminjaman Saya: Ringkasan GraphQL, Status Terlambat, & Pengembalian B
 
     // Terlambat 1 buku
     expect(within(summarySection).getByText('1 buku')).toBeInTheDocument();
-    expect(within(summarySection).getByText('Perhatian')).toBeInTheDocument();
 
     // Readlist
     expect(within(summarySection).getByText(/2 referensi/i)).toBeInTheDocument();
