@@ -1,11 +1,15 @@
+import { Pencil, Trash2 } from 'lucide-react';
 import { cn } from '../../lib/cn';
 import { getStockSummary } from '../../lib/format';
 import type { LibraryBook } from '../../types/domain';
 import { BookCover } from '../ui/BookCover';
+import { Button } from '../ui/Button';
 import { StatusBadge } from '../ui/StatusBadge';
 
-interface AdminBooksTableProps {
+export interface AdminBooksTableProps {
   books: LibraryBook[];
+  onEdit?: (book: LibraryBook) => void;
+  onDelete?: (book: LibraryBook) => void;
 }
 
 function StockVisualScale({
@@ -57,7 +61,9 @@ function StockVisualScale({
   );
 }
 
-export function AdminBooksTable({ books }: AdminBooksTableProps) {
+export function AdminBooksTable({ books, onEdit, onDelete }: AdminBooksTableProps) {
+  const showActions = Boolean(onEdit || onDelete);
+
   return (
     <div>
       {/* Desktop Table */}
@@ -75,6 +81,11 @@ export function AdminBooksTable({ books }: AdminBooksTableProps) {
                 <th scope="col" className="w-64 px-4 py-3">
                   Stok (Tersedia / Total)
                 </th>
+                {showActions && (
+                  <th scope="col" className="w-36 px-4 py-3 text-right">
+                    Aksi
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border)]">
@@ -112,6 +123,37 @@ export function AdminBooksTable({ books }: AdminBooksTableProps) {
                       stockTotal={book.stockTotal}
                     />
                   </td>
+                  {showActions && (
+                    <td className="px-4 py-3.5 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        {onEdit && (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            aria-label={`Edit ${book.title}`}
+                            onClick={() => onEdit(book)}
+                          >
+                            <Pencil className="h-3.5 w-3.5 text-[var(--color-primary)]" aria-hidden="true" />
+                            <span>Edit</span>
+                          </Button>
+                        )}
+                        {onDelete && (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            aria-label={`Hapus ${book.title}`}
+                            className="text-[var(--color-danger)] border-[var(--color-danger-border)] hover:bg-[var(--color-danger-surface)]"
+                            onClick={() => onDelete(book)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 text-[var(--color-danger)]" aria-hidden="true" />
+                            <span>Hapus</span>
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -148,6 +190,36 @@ export function AdminBooksTable({ books }: AdminBooksTableProps) {
                 stockTotal={book.stockTotal}
               />
             </div>
+            {showActions && (
+              <div className="mt-3 flex items-center justify-end gap-2 border-t border-[var(--color-border)] pt-3">
+                {onEdit && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="flex-1"
+                    aria-label={`Edit ${book.title}`}
+                    onClick={() => onEdit(book)}
+                  >
+                    <Pencil className="h-3.5 w-3.5 text-[var(--color-primary)]" aria-hidden="true" />
+                    <span>Edit</span>
+                  </Button>
+                )}
+                {onDelete && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="flex-1 text-[var(--color-danger)] border-[var(--color-danger-border)] hover:bg-[var(--color-danger-surface)]"
+                    aria-label={`Hapus ${book.title}`}
+                    onClick={() => onDelete(book)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 text-[var(--color-danger)]" aria-hidden="true" />
+                    <span>Hapus</span>
+                  </Button>
+                )}
+              </div>
+            )}
           </article>
         ))}
       </div>
