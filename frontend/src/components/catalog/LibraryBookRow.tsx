@@ -111,11 +111,7 @@ export function LibraryBookRow({ book, isSelected, onSelect }: LibraryBookRowPro
             >
               Kelola
             </Link>
-          ) : isBorrowed ? (
-            <span className="inline-flex items-center rounded-[var(--radius-control)] border border-[var(--color-primary-border)] bg-[var(--color-primary-soft)] px-2.5 py-1 text-xs font-semibold text-[var(--color-primary)]">
-              Sedang Anda Pinjam
-            </span>
-          ) : isOutOfStock ? (
+          ) : isBorrowed ? null : isOutOfStock ? (
             <span className="inline-flex items-center rounded-[var(--radius-control)] border border-[var(--color-border)] bg-[var(--color-surface-subtle)] px-2.5 py-1 text-xs font-semibold text-[var(--color-ink-subtle)]">
               Stok Habis
             </span>
