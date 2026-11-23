@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { isApiError } from '../lib/api-error';
 import { bookService, DEFAULT_CATALOG_LIMIT } from '../services/book-service';
 
@@ -9,10 +9,16 @@ export interface CatalogFilterState {
   limit: number;
 }
 
+export interface AdminLibraryBooksParams extends CatalogFilterState {
+  page: number;
+}
+
 export const libraryBookKeys = {
   all: ['library-books'] as const,
   lists: () => [...libraryBookKeys.all, 'list'] as const,
   list: (filters: CatalogFilterState) => [...libraryBookKeys.lists(), filters] as const,
+  paginated: (params: AdminLibraryBooksParams) =>
+    [...libraryBookKeys.lists(), 'paginated', params] as const,
   details: () => [...libraryBookKeys.all, 'detail'] as const,
   detail: (id: number) => [...libraryBookKeys.details(), id] as const,
 };
@@ -65,5 +71,24 @@ export function useLibraryBookDetail(bookId: number | null) {
       }
       return failureCount < 1;
     },
+  });
+}
+
+/**
+ * Hook paginated query untuk daftar Buku Perpustakaan di Workspace Admin (`/admin/books`).
+ */
+export function useLibraryBooks(params: AdminLibraryBooksParams) {
+  const normalizedParams: AdminLibraryBooksParams = {
+    q: params.q.trim(),
+    category: params.category.trim(),
+    availableOnly: Boolean(params.availableOnly),
+    page: Math.max(1, params.page || 1),
+    limit: params.limit || DEFAULT_CATALOG_LIMIT,
+  };
+
+  return useQuery({
+    queryKey: libraryBookKeys.paginated(normalizedParams),
+    queryFn: ({ signal }) => bookService.list(normalizedParams, signal),
+    placeholderData: keepPreviousData,
   });
 }
