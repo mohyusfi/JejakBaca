@@ -199,10 +199,10 @@ function AdminBooksPage() {
           type="button"
           variant="primary"
           size="sm"
+          leftIcon={<Plus className="h-4 w-4" aria-hidden="true" />}
           onClick={handleOpenCreateDrawer}
         >
-          <Plus className="h-4 w-4" aria-hidden="true" />
-          <span>Tambah Buku</span>
+          Buku
         </Button>
       </div>
 

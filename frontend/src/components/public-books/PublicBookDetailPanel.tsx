@@ -241,7 +241,7 @@ export function PublicBookDetailPanel({ workId, onClose }: PublicBookDetailPanel
                     leftIcon={<BookmarkPlus className="h-4 w-4" />}
                     onClick={handleAdd}
                   >
-                    + Readlist
+                    Readlist
                   </Button>
                 )}
                 {actor === 'guest' && !detail.inReadlist && (

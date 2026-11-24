@@ -56,7 +56,7 @@ describe('Workspace Admin: CRUD Buku Perpustakaan — Issue #22', () => {
       expect(await screen.findByRole('heading', { name: /Daftar Koleksi Buku/i })).toBeInTheDocument();
 
       // Klik tombol Tambah Buku
-      const addBtn = screen.getByRole('button', { name: /Tambah Buku/i });
+      const addBtn = screen.getByRole('button', { name: /^Buku$/i });
       await user.click(addBtn);
 
       // Drawer terbuka
@@ -78,7 +78,7 @@ describe('Workspace Admin: CRUD Buku Perpustakaan — Issue #22', () => {
       renderAppAt('/admin/books');
 
       await screen.findByRole('heading', { name: /Daftar Koleksi Buku/i });
-      await user.click(screen.getByRole('button', { name: /Tambah Buku/i }));
+      await user.click(screen.getByRole('button', { name: /^Buku$/i }));
 
       const drawer = screen.getByRole('dialog', { name: /Tambah Buku Perpustakaan/i });
 
@@ -104,7 +104,7 @@ describe('Workspace Admin: CRUD Buku Perpustakaan — Issue #22', () => {
       renderAppAt('/admin/books');
 
       await screen.findByRole('heading', { name: /Daftar Koleksi Buku/i });
-      await user.click(screen.getByRole('button', { name: /Tambah Buku/i }));
+      await user.click(screen.getByRole('button', { name: /^Buku$/i }));
 
       const drawer = screen.getByRole('dialog', { name: /Tambah Buku Perpustakaan/i });
       const coverInput = within(drawer).getByLabelText(/URL Sampul Buku/i);
@@ -128,7 +128,7 @@ describe('Workspace Admin: CRUD Buku Perpustakaan — Issue #22', () => {
       renderAppAt('/admin/books');
 
       await screen.findByRole('heading', { name: /Daftar Koleksi Buku/i });
-      await user.click(screen.getByRole('button', { name: /Tambah Buku/i }));
+      await user.click(screen.getByRole('button', { name: /^Buku$/i }));
 
       const drawer = screen.getByRole('dialog', { name: /Tambah Buku Perpustakaan/i });
 
