@@ -68,7 +68,7 @@ JejakBaca secara ketat memisahkan **Buku Perpustakaan UNTAD** (koleksi milik per
   - `docs/adr/0001-akses-tamu-dan-halaman-terpisah.md`
   - `../docs/adr/0001-pemisahan-koleksi-pinjam-dan-readlist-publik.md`
   - `../docs/adr/0003-hybrid-rest-graphql-dan-api-versioning.md`
-  - `../docs/api/openapi.yaml` dan `../docs/api/schema.graphql`
+  - `../docs/api/openapi.yaml` dan `../backend/src/graphql/schema.graphql`
 - **Sumber Data Nyata:** Data *seed* backend SQLite (akun Admin dan koleksi Buku Perpustakaan) serta respons Open Library API melalui proxy Backend.
 - **Ketiadaan yang Tidak Boleh Dikarang:** Belum ada logo khusus JejakBaca/UNTAD, testimoni pengguna, metrik jumlah mahasiswa/buku fiktif, maupun klaim sertifikasi atau dukungan institusi resmi di luar data yang nyata tersedia.
 
