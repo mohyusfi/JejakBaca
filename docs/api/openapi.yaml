@@ -1187,7 +1187,7 @@ paths:
       description: |
         Satu-satunya endpoint GraphQL pada sistem ini (dibangun langsung dengan paket `graphql`).
         Berperan sebagai *Query Aggregator* read-only untuk mengambil katalog maupun ringkasan dashboard.
-        Skema lengkap tersedia pada `docs/api/schema.graphql`.
+        Skema lengkap tersedia pada `backend/src/graphql/schema.graphql`.
       requestBody:
         required: true
         content:

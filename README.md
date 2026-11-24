@@ -26,7 +26,7 @@ Pengelolaan perpustakaan membutuhkan pemisahan yang jelas antara koleksi fisik m
 - **Arsitektur API**: Hybrid **REST API** (`/api/v1/*`) untuk transaksi/CRUD & **GraphQL** (`POST /graphql` dengan `graphql`) untuk *query aggregator* read-only
 - **Autentikasi**: JWT (*stateless*) melalui header `Authorization: Bearer`
 - **Integrasi Eksternal**: Open Library API (`https://openlibrary.org`)
-- **Kontrak & Dokumentasi API**: OpenAPI (`docs/api/openapi.yaml`), GraphQL Schema (`docs/api/schema.graphql`), dan koleksi Bruno (`docs/bruno`)
+- **Kontrak & Dokumentasi API**: OpenAPI (`docs/api/openapi.yaml`), GraphQL Schema (`backend/src/graphql/schema.graphql`), dan koleksi Bruno (`docs/bruno`)
 
 ### Frontend
 - **Framework & Bahasa**: React 19, TypeScript

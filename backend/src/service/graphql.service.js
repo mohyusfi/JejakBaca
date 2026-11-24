@@ -14,29 +14,13 @@ const OVERVIEW_RECENT_LIMIT = 5;
 
 let cachedSchema = null;
 
-/**
- * Mencari path berkas docs/api/schema.graphql
- * @returns {string | null}
- */
-function findSchemaPath() {
-  const currentDir = path.dirname(fileURLToPath(import.meta.url));
-  const candidatePaths = [
-    path.resolve(currentDir, '../../../docs/api/schema.graphql'),
-    path.resolve(process.cwd(), 'docs/api/schema.graphql'),
-    path.resolve(process.cwd(), '../docs/api/schema.graphql'),
-  ];
-
-  for (const candidate of candidatePaths) {
-    if (fs.existsSync(candidate)) {
-      return candidate;
-    }
-  }
-
-  return null;
-}
+const SCHEMA_PATH = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../graphql/schema.graphql'
+);
 
 /**
- * Memuat dan membangun GraphQLSchema dari docs/api/schema.graphql (di-cache)
+ * Memuat dan membangun GraphQLSchema dari backend/src/graphql/schema.graphql (di-cache)
  * @returns {import('graphql').GraphQLSchema}
  */
 export function getGraphQLSchema() {
@@ -44,12 +28,11 @@ export function getGraphQLSchema() {
     return cachedSchema;
   }
 
-  const schemaPath = findSchemaPath();
-  if (!schemaPath) {
-    throw new Error('Berkas skema GraphQL (docs/api/schema.graphql) tidak ditemukan');
+  if (!fs.existsSync(SCHEMA_PATH)) {
+    throw new Error(`Berkas skema GraphQL (${SCHEMA_PATH}) tidak ditemukan`);
   }
 
-  const sdl = fs.readFileSync(schemaPath, 'utf-8');
+  const sdl = fs.readFileSync(SCHEMA_PATH, 'utf-8');
   cachedSchema = buildSchema(sdl);
   return cachedSchema;
 }
