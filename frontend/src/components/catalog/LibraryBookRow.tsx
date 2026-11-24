@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import { BookPlus } from 'lucide-react';
 import { useBorrowAction } from '../../hooks/useBorrowAction';
 import { cn } from '../../lib/cn';
 import { getStockSummary, type StockHealth } from '../../lib/format';
@@ -125,9 +126,11 @@ export function LibraryBookRow({ book, isSelected, onSelect }: LibraryBookRowPro
               size="sm"
               isLoading={isLoading}
               onClick={handleBorrow}
-              className="min-h-[30px] px-3 py-1 text-xs"
+              aria-label={`Pinjam ${book.title}`}
+              title="Pinjam buku"
+              className="min-h-[30px] px-2.5 py-1 text-xs"
             >
-              Pinjam
+              <BookPlus className="h-4 w-4" aria-hidden="true" />
             </Button>
           )}
         </div>

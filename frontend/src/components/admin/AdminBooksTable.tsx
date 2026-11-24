@@ -135,7 +135,6 @@ export function AdminBooksTable({ books, onEdit, onDelete }: AdminBooksTableProp
                             onClick={() => onEdit(book)}
                           >
                             <Pencil className="h-3.5 w-3.5 text-[var(--color-primary)]" aria-hidden="true" />
-                            <span>Edit</span>
                           </Button>
                         )}
                         {onDelete && (
@@ -148,7 +147,6 @@ export function AdminBooksTable({ books, onEdit, onDelete }: AdminBooksTableProp
                             onClick={() => onDelete(book)}
                           >
                             <Trash2 className="h-3.5 w-3.5 text-[var(--color-danger)]" aria-hidden="true" />
-                            <span>Hapus</span>
                           </Button>
                         )}
                       </div>
@@ -202,7 +200,6 @@ export function AdminBooksTable({ books, onEdit, onDelete }: AdminBooksTableProp
                     onClick={() => onEdit(book)}
                   >
                     <Pencil className="h-3.5 w-3.5 text-[var(--color-primary)]" aria-hidden="true" />
-                    <span>Edit</span>
                   </Button>
                 )}
                 {onDelete && (
@@ -215,7 +212,6 @@ export function AdminBooksTable({ books, onEdit, onDelete }: AdminBooksTableProp
                     onClick={() => onDelete(book)}
                   >
                     <Trash2 className="h-3.5 w-3.5 text-[var(--color-danger)]" aria-hidden="true" />
-                    <span>Hapus</span>
                   </Button>
                 )}
               </div>

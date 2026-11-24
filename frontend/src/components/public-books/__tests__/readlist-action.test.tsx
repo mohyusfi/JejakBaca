@@ -70,7 +70,7 @@ describe('Aksi Tambah/Hapus Readlist di Jelajah Buku Publik & Intent Pasca-Login
       });
       expect(panel).toBeInTheDocument();
 
-      const addBtn = await within(panel).findByRole('button', { name: /\+ Readlist/i });
+      const addBtn = await within(panel).findByRole('button', { name: /Readlist/i });
       expect(addBtn).toBeInTheDocument();
 
       await user.click(addBtn);
@@ -120,7 +120,7 @@ describe('Aksi Tambah/Hapus Readlist di Jelajah Buku Publik & Intent Pasca-Login
 
       // Memastikan buku TIDAK otomatis tersimpan ke Readlist (tombol tetap "+ Readlist", tidak ada badge "Di Readlist")
       expect(
-        within(panel).getByRole('button', { name: /\+ Readlist/i }),
+        within(panel).getByRole('button', { name: /Readlist/i }),
       ).toBeInTheDocument();
       expect(within(panel).queryByText('Di Readlist')).not.toBeInTheDocument();
       expect(
@@ -201,7 +201,7 @@ describe('Aksi Tambah/Hapus Readlist di Jelajah Buku Publik & Intent Pasca-Login
       expect(panel).toBeInTheDocument();
 
       // 1. Tambah dari panel detail
-      const addBtn = await within(panel).findByRole('button', { name: /\+ Readlist/i });
+      const addBtn = await within(panel).findByRole('button', { name: /Readlist/i });
       await user.click(addBtn);
 
       expect(await screen.findByText('Berhasil Ditambahkan ke Readlist')).toBeInTheDocument();
@@ -218,7 +218,7 @@ describe('Aksi Tambah/Hapus Readlist di Jelajah Buku Publik & Intent Pasca-Login
 
       expect(await screen.findByText('Berhasil Dihapus dari Readlist')).toBeInTheDocument();
       expect(
-        await within(panel).findByRole('button', { name: /\+ Readlist/i }),
+        await within(panel).findByRole('button', { name: /Readlist/i }),
       ).toBeInTheDocument();
       expect(within(panel).queryByText('Di Readlist')).not.toBeInTheDocument();
     });
@@ -311,7 +311,7 @@ describe('Aksi Tambah/Hapus Readlist di Jelajah Buku Publik & Intent Pasca-Login
       expect(panel).toBeInTheDocument();
 
       expect(
-        within(panel).queryByRole('button', { name: /\+ Readlist/i }),
+        within(panel).queryByRole('button', { name: /Readlist/i }),
       ).not.toBeInTheDocument();
       expect(
         within(panel).queryByRole('button', { name: /Hapus dari Readlist/i }),
