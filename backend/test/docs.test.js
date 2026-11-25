@@ -38,6 +38,7 @@ describe('Endpoint Dokumentasi OpenAPI & Swagger/Scalar', () => {
     assert.match(text, /openapi: 3\.0\.3/);
     assert.match(text, /title: API Perpustakaan UNTAD/);
     assert.match(text, /\/api\/v1\/health:/);
+    assert.match(text, /\/api\/v2\/health:/);
   });
 
   test('GET /api/docs menyajikan halaman HTML dokumentasi interaktif', async () => {

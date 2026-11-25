@@ -20,6 +20,28 @@ export const healthService = {
       timestamp: new Date().toISOString(),
     };
   },
+
+  /**
+   * Memeriksa kondisi kesehatan server v2 dengan metadata versi API dan uptime
+   * @returns {{ status: string, apiVersion: string, supportedVersions: string[], uptimeSeconds: number, services: { database: { status: string, engine: string } }, timestamp: string }}
+   */
+  checkHealthV2() {
+    const baseHealth = this.checkHealth();
+
+    return {
+      status: baseHealth.status,
+      apiVersion: 'v2',
+      supportedVersions: ['v1', 'v2'],
+      uptimeSeconds: Math.floor(process.uptime()),
+      services: {
+        database: {
+          status: baseHealth.database,
+          engine: 'sqlite',
+        },
+      },
+      timestamp: baseHealth.timestamp,
+    };
+  },
 };
 
 export default healthService;
