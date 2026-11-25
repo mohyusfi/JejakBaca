@@ -8,7 +8,7 @@ info:
     Aturan domain utama:
     - **Buku Perpustakaan** (dikelola Admin) hanya untuk fitur **Pinjam & Kembalikan** secara *self-service* oleh User.
     - **Buku Publik** (proxy ke Open Library API) tidak dapat dipinjam/dikembalikan, dan **hanya** untuk dilihat deskripsinya serta disimpan/dihapus pada **Readlist**.
-    - Seluruh endpoint REST menggunakan prefix versi `/api/v1`, sedangkan endpoint GraphQL tunggal berada di `POST /graphql`.
+    - Seluruh endpoint REST menggunakan prefix versi `/api/v1` (dengan `/api/v2/health` sebagai versi terbaru untuk health check), sedangkan endpoint GraphQL tunggal berada di `POST /graphql`.
 
 servers:
   - url: http://localhost:3000
@@ -568,11 +568,29 @@ paths:
   /api/v1/health:
     get:
       tags: [System]
-      summary: Cek kesehatan server dan SQLite
+      summary: Cek kesehatan server dan SQLite (v1 - Deprecated)
+      description: Endpoint health check versi v1. Tetap aktif untuk kompatibilitas mundur, namun disarankan beralih ke `GET /api/v2/health`.
+      deprecated: true
       security: []
       responses:
         '200':
           description: Server berjalan normal
+          headers:
+            X-API-Version:
+              description: Versi API yang melayani request
+              schema:
+                type: string
+                example: v1
+            Deprecation:
+              description: Menandakan endpoint telah berstatus deprecated
+              schema:
+                type: string
+                example: 'true'
+            Link:
+              description: Tautan ke endpoint versi pengganti (successor-version)
+              schema:
+                type: string
+                example: '</api/v2/health>; rel="successor-version"'
           content:
             application/json:
               schema:
@@ -585,6 +603,48 @@ paths:
                     properties:
                       status: { type: string, example: ok }
                       database: { type: string, example: connected }
+                      timestamp: { type: string, format: date-time }
+
+  /api/v2/health:
+    get:
+      tags: [System]
+      summary: Cek kesehatan server, versi API, dan uptime (v2)
+      description: Endpoint health check versi v2 dengan informasi versi API, daftar versi yang didukung, waktu aktif server (`uptimeSeconds`), dan status layanan terstruktur.
+      security: []
+      responses:
+        '200':
+          description: Server berjalan normal
+          headers:
+            X-API-Version:
+              description: Versi API yang melayani request
+              schema:
+                type: string
+                example: v2
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: Server sehat }
+                  data:
+                    type: object
+                    properties:
+                      status: { type: string, example: ok }
+                      apiVersion: { type: string, example: v2 }
+                      supportedVersions:
+                        type: array
+                        items: { type: string }
+                        example: [v1, v2]
+                      uptimeSeconds: { type: integer, example: 120 }
+                      services:
+                        type: object
+                        properties:
+                          database:
+                            type: object
+                            properties:
+                              status: { type: string, example: connected }
+                              engine: { type: string, example: sqlite }
                       timestamp: { type: string, format: date-time }
 
   /api/openapi.yaml:

@@ -27,6 +27,7 @@ export function createApp(options = {}) {
 
   // Daftarkan rute sistem & dokumentasi inti
   router.get('/api/v1/health', healthController.getHealth);
+  router.get('/api/v2/health', healthController.getHealthV2);
   router.get('/api/openapi.yaml', docsController.serveOpenApiYaml);
   router.get('/api/docs', docsController.serveDocs);
 
