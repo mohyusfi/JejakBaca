@@ -47,5 +47,9 @@ describe('Penanganan CORS & Preflight Request', () => {
     const res = await fetch(`${baseUrl}/api/v1/health`);
     assert.equal(res.status, 200);
     assert.equal(res.headers.get('access-control-allow-origin'), '*');
+    assert.match(
+      res.headers.get('access-control-expose-headers'),
+      /X-API-Version, Deprecation, Sunset, Link/,
+    );
   });
 });

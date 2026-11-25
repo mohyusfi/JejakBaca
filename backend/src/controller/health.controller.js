@@ -1,3 +1,4 @@
+import { config } from '../config/index.js';
 import { healthService } from '../service/health.service.js';
 
 export const healthController = {
@@ -10,6 +11,7 @@ export const healthController = {
     const healthData = healthService.checkHealth();
     res.setHeader('X-API-Version', 'v1');
     res.setHeader('Deprecation', 'true');
+    res.setHeader('Sunset', config.healthV1Sunset);
     res.setHeader('Link', '</api/v2/health>; rel="successor-version"');
 
     res.json(200, {

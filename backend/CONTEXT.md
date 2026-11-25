@@ -1,6 +1,6 @@
 # Backend
 
-Layanan API untuk autentikasi pengguna dan admin, manajemen Buku Perpustakaan, transaksi Peminjaman, Readlist pengguna, serta integrasi Open Library API.
+Layanan API untuk autentikasi pengguna dan admin, manajemen Buku Perpustakaan, transaksi Peminjaman, Readlist pengguna, serta integrasi Open Library API dan Crossref API.
 
 ## Language
 
@@ -27,6 +27,10 @@ _Avoid_: Buku lokal, koleksi internal
 **Buku Publik**:
 Data referensi buku eksternal dari satu sumber Public API (Open Library) yang hanya dapat dilihat deskripsinya dan disimpan ke Readlist, serta tidak dapat dipinjam maupun dikembalikan.
 _Avoid_: Buku eksternal, buku gratis
+
+**Jurnal Publik**:
+Data referensi artikel dan karya ilmiah eksternal dari Crossref API (`GET /api/v1/public-journals`) yang bersifat *read-only* dan terpisah sepenuhnya dari transaksi Peminjaman maupun Readlist.
+_Avoid_: Buku Perpustakaan, item Readlist
 
 **Peminjaman**:
 Transaksi pengambilan satu eksemplar Buku Perpustakaan secara *self-service* oleh User dengan kuota maksimal 3 buku aktif bersamaan, larangan duplikasi judul aktif, dan jatuh tempo 7 hari.

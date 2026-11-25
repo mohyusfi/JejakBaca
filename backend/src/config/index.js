@@ -36,6 +36,11 @@ export const config = {
   openLibraryUserAgent: process.env.OPEN_LIBRARY_USER_AGENT || 'UNTAD-Library-Proxy/1.0 (library@untad.ac.id)',
   openLibraryTimeoutMs: Number(process.env.OPEN_LIBRARY_TIMEOUT_MS) || 8000,
   openLibraryCacheTtlMs: Number(process.env.OPEN_LIBRARY_CACHE_TTL_MS) || 5 * 60 * 1000,
+  healthV1Sunset: process.env.HEALTH_V1_SUNSET || 'Wed, 30 Jun 2027 23:59:59 GMT',
+  crossrefBaseUrl: process.env.CROSSREF_BASE_URL || 'https://api.crossref.org',
+  crossrefUserAgent: process.env.CROSSREF_USER_AGENT || 'UNTAD-Library-Proxy/1.0 (mailto:library@untad.ac.id)',
+  crossrefTimeoutMs: Number(process.env.CROSSREF_TIMEOUT_MS) || 8000,
+  crossrefCacheTtlMs: Number(process.env.CROSSREF_CACHE_TTL_MS) || 5 * 60 * 1000,
 };
 
 export default config;

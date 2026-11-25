@@ -19,4 +19,11 @@ tests {
     const body = res.getBody();
     expect(body.success).to.equal(true);
   });
+
+  test("Versioning and Sunset headers are present", function() {
+    expect(res.getHeader("x-api-version")).to.equal("v1");
+    expect(res.getHeader("deprecation")).to.equal("true");
+    expect(res.getHeader("sunset")).to.equal("Wed, 30 Jun 2027 23:59:59 GMT");
+    expect(res.getHeader("link")).to.equal('</api/v2/health>; rel="successor-version"');
+  });
 }
