@@ -12,9 +12,10 @@ Pengelolaan perpustakaan membutuhkan pemisahan yang jelas antara koleksi fisik m
    - Dikelola oleh **Admin** (CRUD buku, stok eksemplar, deskripsi wajib, serta URL cover opsional).
    - Dapat dipinjam secara *self-service* oleh **User** (mahasiswa/anggota terdaftar dengan NIM & email unik).
    - Menerapkan aturan bisnis: maksimal **3 buku aktif** bersamaan per User, larangan duplikasi judul aktif, durasi peminjaman **7 hari**, serta penandaan status **Terlambat** tanpa perhitungan denda uang.
-2. **Katalog Buku Publik & Readlist (Eksternal)**
-   - Mengambil data referensi buku dari **Open Library API** melalui proxy backend.
+2. **Katalog Buku Publik, Jurnal Publik & Readlist (Eksternal)**
+   - Mengambil data referensi buku dari **Open Library API** melalui proxy backend (`GET /api/v1/public-books`).
    - User dapat membaca deskripsi buku secara *lazy* dan menyimpannya ke daftar bacaan pribadi (**Readlist**) sebagai snapshot metadata, terpisah sepenuhnya dari transaksi peminjaman.
+   - Menyediakan pencarian referensi jurnal dan karya ilmiah eksternal secara *read-only* dari **Crossref API** (`GET /api/v1/public-journals`).
 
 ---
 
@@ -23,9 +24,9 @@ Pengelolaan perpustakaan membutuhkan pemisahan yang jelas antara koleksi fisik m
 ### Backend
 - **Runtime**: Node.js (ES Modules, `node:http`, `node:test`)
 - **Database**: SQLite menggunakan modul bawaan `node:sqlite` (`DatabaseSync`)
-- **Arsitektur API**: Hybrid **REST API** (`/api/v1/*`) untuk transaksi/CRUD & **GraphQL** (`POST /graphql` dengan `graphql`) untuk *query aggregator* read-only
+- **Arsitektur API**: Hybrid **REST API** (`/api/v1/*` dan `/api/v2/health`, dengan header `Deprecation` & `Sunset` pada `/api/v1/health`) untuk transaksi/CRUD & **GraphQL** (`POST /graphql` dengan `graphql`) untuk *query aggregator* read-only
 - **Autentikasi**: JWT (*stateless*) melalui header `Authorization: Bearer`
-- **Integrasi Eksternal**: Open Library API (`https://openlibrary.org`)
+- **Integrasi Eksternal**: Open Library API (`https://openlibrary.org`) & Crossref API (`https://api.crossref.org`)
 - **Kontrak & Dokumentasi API**: OpenAPI (`docs/api/openapi.yaml`), GraphQL Schema (`backend/src/graphql/schema.graphql`), dan koleksi Bruno (`docs/bruno`)
 
 ### Frontend
@@ -55,7 +56,7 @@ npm run dev
 
 - Server berjalan secara default di `http://localhost:3000`.
 - Dokumentasi OpenAPI interaktif: `http://localhost:3000/api/docs`
-- Endpoint *health check*: `http://localhost:3000/api/v1/health`
+- Endpoint *health check*: `http://localhost:3000/api/v1/health` (deprecated dengan header `Sunset`) & `http://localhost:3000/api/v2/health`
 - Akun **Admin** default di-*seed* otomatis dari konfigurasi `.env` (`ADMIN_EMAIL` dan `ADMIN_PASSWORD`, default contoh: `admin@untad.ac.id` / `Admin123!`).
 - Menjalankan test backend:
   ```bash
