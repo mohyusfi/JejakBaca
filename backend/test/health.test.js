@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import { createApp } from '../src/app/index.js';
 import { closeDb } from '../src/app/database.js';
+import { config } from '../src/config/index.js';
 
 describe('Endpoint Health Check: GET /api/v1/health & GET /api/v2/health', () => {
   let server;
@@ -36,6 +37,9 @@ describe('Endpoint Health Check: GET /api/v1/health & GET /api/v2/health', () =>
 
     assert.equal(res.headers.get('x-api-version'), 'v1');
     assert.equal(res.headers.get('deprecation'), 'true');
+    assert.equal(res.headers.get('sunset'), config.healthV1Sunset);
+    assert.equal(Number.isNaN(Date.parse(res.headers.get('sunset'))), false);
+    assert.equal(res.headers.get('sunset').endsWith('GMT'), true);
     assert.equal(res.headers.get('link'), '</api/v2/health>; rel="successor-version"');
 
     const body = await res.json();
@@ -60,6 +64,7 @@ describe('Endpoint Health Check: GET /api/v1/health & GET /api/v2/health', () =>
 
     assert.equal(res.headers.get('x-api-version'), 'v2');
     assert.equal(res.headers.get('deprecation'), null);
+    assert.equal(res.headers.get('sunset'), null);
 
     const body = await res.json();
     assert.equal(body.success, true);

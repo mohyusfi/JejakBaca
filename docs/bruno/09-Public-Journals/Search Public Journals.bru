@@ -1,0 +1,30 @@
+meta {
+  name: Search Public Journals
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/public-journals?q=computer+science&page=1&limit=10
+  body: none
+  auth: none
+}
+
+params:query {
+  q: computer science
+  page: 1
+  limit: 10
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response returns public journals", function() {
+    const body = res.getBody();
+    expect(body.success).to.equal(true);
+    expect(body.data).to.be.an("array");
+    expect(body.meta).to.be.an("object");
+  });
+}

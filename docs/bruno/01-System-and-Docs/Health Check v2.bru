@@ -1,0 +1,25 @@
+meta {
+  name: Health Check v2
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/v2/health
+  body: none
+  auth: none
+}
+
+tests {
+  test("Status code is 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response reports v2 health metadata", function() {
+    expect(res.getHeader("x-api-version")).to.equal("v2");
+    const body = res.getBody();
+    expect(body.success).to.equal(true);
+    expect(body.data.apiVersion).to.equal("v2");
+    expect(body.data.services.database.engine).to.equal("sqlite");
+  });
+}

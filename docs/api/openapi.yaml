@@ -8,7 +8,8 @@ info:
     Aturan domain utama:
     - **Buku Perpustakaan** (dikelola Admin) hanya untuk fitur **Pinjam & Kembalikan** secara *self-service* oleh User.
     - **Buku Publik** (proxy ke Open Library API) tidak dapat dipinjam/dikembalikan, dan **hanya** untuk dilihat deskripsinya serta disimpan/dihapus pada **Readlist**.
-    - Seluruh endpoint REST menggunakan prefix versi `/api/v1` (dengan `/api/v2/health` sebagai versi terbaru untuk health check), sedangkan endpoint GraphQL tunggal berada di `POST /graphql`.
+    - **Jurnal Publik** (proxy ke Crossref API melalui `GET /api/v1/public-journals`) menyediakan pencarian referensi jurnal dan karya ilmiah eksternal secara *read-only*, terpisah dari Buku Perpustakaan maupun Readlist.
+    - Seluruh endpoint REST menggunakan prefix versi `/api/v1` (dengan `/api/v2/health` sebagai versi terbaru untuk health check serta header `Sunset` pada `GET /api/v1/health`), sedangkan endpoint GraphQL tunggal berada di `POST /graphql`.
 
 servers:
   - url: http://localhost:3000
@@ -31,6 +32,8 @@ tags:
     description: Pemantauan seluruh peminjaman buku oleh Admin
   - name: Public Books
     description: Proxy pencarian dan detail Buku Publik dari Open Library API
+  - name: Public Journals
+    description: Proxy pencarian jurnal dan karya ilmiah publik dari Crossref API
   - name: User Readlist
     description: Pengelolaan daftar bacaan pribadi (khusus Buku Publik)
   - name: GraphQL
@@ -445,6 +448,45 @@ components:
               type: string
               example: Deskripsi belum tersedia di Open Library.
 
+    PublicJournalSummary:
+      type: object
+      required: [doi, title, authors, citationCount, url]
+      properties:
+        doi:
+          type: string
+          example: 10.1145/1234567
+        title:
+          type: string
+          example: A Survey of Software Engineering Research
+        authors:
+          type: array
+          items:
+            type: string
+          example: [Andi Pratama, Siti Rahma]
+        journal:
+          type: string
+          nullable: true
+          example: Journal of Computer Science
+        publisher:
+          type: string
+          nullable: true
+          example: ACM
+        publishedYear:
+          type: integer
+          nullable: true
+          example: 2025
+        type:
+          type: string
+          nullable: true
+          example: journal-article
+        citationCount:
+          type: integer
+          example: 12
+        url:
+          type: string
+          format: uri
+          example: https://doi.org/10.1145/1234567
+
     ReadlistItem:
       type: object
       required: [id, workId, title, authors, createdAt]
@@ -558,7 +600,7 @@ components:
           schema:
             $ref: '#/components/schemas/ApiErrorResponse'
     UpstreamError:
-      description: Open Library API gagal merespons atau timeout
+      description: API eksternal (Open Library atau Crossref) gagal merespons atau timeout
       content:
         application/json:
           schema:
@@ -586,6 +628,11 @@ paths:
               schema:
                 type: string
                 example: 'true'
+            Sunset:
+              description: Tanggal penghentian dukungan endpoint versi v1 (RFC 8594)
+              schema:
+                type: string
+                example: 'Wed, 30 Jun 2027 23:59:59 GMT'
             Link:
               description: Tautan ke endpoint versi pengganti (successor-version)
               schema:
@@ -1128,6 +1175,45 @@ paths:
                     $ref: '#/components/schemas/PublicBookDetail'
         '404':
           $ref: '#/components/responses/NotFoundError'
+        '502':
+          $ref: '#/components/responses/UpstreamError'
+
+  /api/v1/public-journals:
+    get:
+      tags: [Public Journals]
+      summary: Cari jurnal dan karya ilmiah publik melalui proxy Crossref API
+      security:
+        - {}
+        - BearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          schema: { type: string, default: computer science }
+          description: Kata kunci pencarian karya ilmiah (default `computer science` jika kosong)
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 20, default: 10 }
+      responses:
+        '200':
+          description: Daftar referensi jurnal publik dari Crossref API
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: Jurnal publik berhasil diambil }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PublicJournalSummary'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '400':
+          $ref: '#/components/responses/ValidationError'
         '502':
           $ref: '#/components/responses/UpstreamError'
 

@@ -11,6 +11,7 @@ import { authController } from '../controller/auth.controller.js';
 import { bookController } from '../controller/book.controller.js';
 import { loanController } from '../controller/loan.controller.js';
 import { publicBookController } from '../controller/publicBook.controller.js';
+import { publicJournalController } from '../controller/publicJournal.controller.js';
 import { readlistController } from '../controller/readlist.controller.js';
 import { graphqlController } from '../controller/graphql.controller.js';
 
@@ -49,9 +50,10 @@ export function createApp(options = {}) {
   router.patch('/api/v1/loans/:id/return', authMiddleware, roleGuard('user'), loanController.returnLoan);
   router.get('/api/v1/admin/loans', authMiddleware, roleGuard('admin'), loanController.getAdminLoans);
 
-  // 5. Rute Proxy Buku Publik (Open Library API)
+  // 5. Rute Proxy Buku & Jurnal Publik (Open Library & Crossref API)
   router.get('/api/v1/public-books', optionalAuthMiddleware, publicBookController.searchPublicBooks);
   router.get('/api/v1/public-books/:workId', optionalAuthMiddleware, publicBookController.getPublicBookById);
+  router.get('/api/v1/public-journals', optionalAuthMiddleware, publicJournalController.searchPublicJournals);
   // 6. Rute Readlist Pribadi User
   router.get('/api/v1/readlist', authMiddleware, roleGuard('user'), readlistController.getReadlist);
   router.post('/api/v1/readlist', authMiddleware, roleGuard('user'), readlistController.addToReadlist);
